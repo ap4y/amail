@@ -1,5 +1,5 @@
 class ApiClient {
-  static default = null;
+  static default = new ApiClient("/api");
 
   constructor(baseURL) {
     this.baseURL = baseURL;

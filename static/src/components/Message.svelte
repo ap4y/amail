@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { pushState, selectedMailbox } from "../stores/url";
 
   import BodyItem from "./BodyItem.svelte";
   import ToolbarButton from "./ToolbarButton.svelte";
@@ -7,7 +7,12 @@
 
   export let message;
 
-  const dispatch = createEventDispatcher();
+  function closeThread() {
+    pushState(
+      { mailbox: $selectedMailbox, thread: null, message: null },
+      `/${$selectedMailbox}`
+    );
+  }
 </script>
 
 <div class="relative bg-gray-100" data-message={message.id}>
@@ -15,7 +20,7 @@
 
   <button
     class="absolute w-5 top-3 right-3 text-gray-500 order-0 hover:text-gray-800 active:text-gray-500 focus:outline-none"
-    on:click={() => dispatch('close')}
+    on:click={() => closeThread()}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

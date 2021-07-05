@@ -15,3 +15,5 @@ export const mailboxTitles = {
   junk: "Spam",
   trash: "Trash",
 };
+
+export const threadsPerPage = 50;

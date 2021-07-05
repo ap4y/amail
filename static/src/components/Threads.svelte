@@ -1,28 +1,27 @@
 <script>
-  import { createEventDispatcher } from "svelte";
-
-  const dispatch = createEventDispatcher();
-
-  export let mailbox;
-  export let threads;
-  export let selectedThread;
+  import { pushState, selectedMailbox, selectedThread } from "../stores/url";
+  import threads from "../stores/threads";
 
   function unreadClasses({ tags }) {
     return tags.includes("unread")
       ? "bg-gray-50 text-red-500 visited:text-red-500"
       : "bg-gray-100 text-gray-600 visited:text-gray-600";
   }
+
+  function selectThread({ mailbox, thread }) {
+    pushState({ mailbox, thread }, `/${mailbox}/${thread}`);
+  }
 </script>
 
-{#each threads as thread (thread.thread)}
+{#each $threads as thread (thread.thread)}
   <a
-    href={`/${mailbox}/${thread.thread}`}
+    href={`/${$selectedMailbox}/${thread.thread}`}
     data-thread={thread.thread}
     class={`h-10 flex flex-row items-center border-b hover:bg-gray-200 ${unreadClasses(
       thread
-    )} ${selectedThread === thread.thread ? "bg-red-100 font-semibold" : ""}`}
+    )} ${$selectedThread === thread.thread ? "bg-red-100 font-semibold" : ""}`}
     on:click|preventDefault={() =>
-      dispatch("click", { mailbox, thread: thread.thread })}
+      selectThread({ mailbox: $selectedMailbox, thread: thread.thread })}
   >
     <span class="px-3 w-28">{thread.date_relative}</span>
     <span class="pr-6 w-40 truncate">{thread.authors}</span>

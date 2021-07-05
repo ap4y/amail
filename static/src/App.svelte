@@ -11,23 +11,22 @@
   import Threads from "./components/Threads.svelte";
   import Thread from "./components/Thread.svelte";
 
-  import url, { pushState } from "./stores/url";
   import ApiClient from "./client";
   import { mailboxIds, mailboxTitles } from "./config";
+  import url, {
+    pushState,
+    selectedMailbox,
+    selectedThread,
+  } from "./stores/url";
+  import mailboxes, { currentMailbox } from "./stores/mailboxes";
+  import threads from "./stores/threads";
+  import thread, { selectedMessage } from "./stores/thread";
 
-  const client = new ApiClient("/api");
+  const client = ApiClient.default;
 
   let address = "";
-  let mailboxes = mailboxIds.reduce((acc, id) => {
-    acc[id] = {};
-    return acc;
-  }, {});
   let refreshing = false;
-  const perPage = 50;
-  let currentPage = 0;
-  let threads = [];
   let threadList, messageList;
-  let thread = null;
   let sidebarCollapsed = true;
 
   onMount(() => {
@@ -35,45 +34,31 @@
   });
 
   $: console.log("params", $url.mailbox, $url.thread, $url.message);
+  $: console.log(
+    "selected",
+    $selectedMailbox,
+    $selectedThread,
+    $selectedMessage
+  );
 
-  $: selectedMailbox = $url.mailbox?.length > 0 ? $url.mailbox : mailboxIds[0];
-  $: selectedThread = $url.thread?.length > 0 ? $url.thread : null;
-  $: selectedMessage =
-    $url.message?.length > 0 ? $url.message : thread ? thread[0].id : null;
-  $: console.log("selected", selectedMailbox, selectedThread, selectedMessage);
-
-  $: mailbox = mailboxes[selectedMailbox];
-  $: {
-    if (mailbox.folder) {
-      const title =
-        mailbox.unread > 0
-          ? `(${mailbox.unread}) ${mailboxTitles[selectedMailbox]}`
-          : mailboxTitles[selectedMailbox];
-      document.title = title;
-
-      client
-        .threads(mailbox.folder, currentPage, perPage)
-        .then((res) => (threads = res));
-    }
+  $: if ($currentMailbox.folder) {
+    const title =
+      $currentMailbox.unread > 0
+        ? `(${$currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
+        : mailboxTitles[$selectedMailbox];
+    document.title = title;
   }
 
-  $: {
-    if (selectedThread) {
-      client.thread(selectedThread).then((res) => (thread = res));
-    }
-  }
-
-  $: {
-    if (selectedMessage) scrollToMessage();
-  }
+  $: if ($selectedThread) scrollToThread();
+  $: if ($selectedMessage) scrollToMessage();
 
   async function refreshMailboxes() {
     refreshing = true;
     const start = Date.now();
 
     try {
-      const res = await client.mailboxes();
-      mailboxes = res.mailboxes;
+      const res = await ApiClient.default.mailboxes();
+      mailboxes.set(res.mailboxes);
       address = res.address;
     } catch (e) {
       console.log(`Failed to fetch mailboxes: ${e.message}`);
@@ -82,42 +67,30 @@
     setTimeout(() => (refreshing = false), 1000 - Date.now() + start);
   }
 
-  function selectMailbox({ detail }) {
-    currentPage = 0;
-    thread = null;
-    pushState({ mailbox: detail }, `/${detail}`);
-  }
-
-  async function selectThread({ detail: { mailbox, thread } }) {
-    pushState({ mailbox, thread }, `/${mailbox}/${thread}`);
-
-    const row = threadList.querySelector(`a[data-thread="${thread}"]`);
+  async function scrollToThread() {
     await tick();
-    row.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+    let interval;
 
-  function selectMessage({ detail }) {
-    pushState({
-      mailbox: selectedMailbox,
-      thread: selectedThread,
-      message: detail,
-    });
+    const check = () => {
+      const row = threadList.querySelector(
+        `a[data-thread="${$selectedThread}"]`
+      );
+      if (!row) return;
+
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      clearInterval(interval);
+    };
+
+    interval = setInterval(check, 100);
+    check();
   }
 
   async function scrollToMessage() {
     await tick();
     const item = messageList.querySelector(
-      `div[data-message="${selectedMessage}"]`
+      `div[data-message="${$selectedMessage}"]`
     );
     item.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function closeThread() {
-    thread = null;
-    pushState(
-      { mailbox: selectedMailbox, thread: null, message: null },
-      `/${selectedMailbox}`
-    );
   }
 </script>
 
@@ -145,12 +118,7 @@
     </div>
 
     <div class="p-4 flex-1">
-      <Mailboxes
-        {mailboxes}
-        {selectedMailbox}
-        collapsed={sidebarCollapsed}
-        on:click={selectMailbox}
-      />
+      <Mailboxes collapsed={sidebarCollapsed} />
     </div>
 
     <div class="p-4">
@@ -169,36 +137,21 @@
       class="h-14 flex-shrink-0 flex flex-row items-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
     >
       <SearchField />
-      <ThreadPages
-        {currentPage}
-        lastPage={Math.ceil(mailbox.total / perPage)}
-        on:previous-page={() => (currentPage = currentPage - 1)}
-        on:next-page={() => (currentPage = currentPage + 1)}
-      />
+      <ThreadPages />
     </header>
 
     <section
       class={`${
-        selectedThread ? "h-60 border-b-8" : "flex-1"
+        $selectedThread ? "h-60 border-b-8" : "flex-1"
       } flex-shrink-0 border-gray-300 overflow-y-auto`}
       bind:this={threadList}
     >
-      <Threads
-        mailbox={selectedMailbox}
-        {threads}
-        {selectedThread}
-        on:click={selectThread}
-      />
+      <Threads />
     </section>
 
-    {#if thread}
+    {#if $thread}
       <section class="flex-1 w-full overflow-y-auto" bind:this={messageList}>
-        <Thread
-          {thread}
-          {selectedMessage}
-          on:click={selectMessage}
-          on:close={closeThread}
-        />
+        <Thread thread={$thread} />
       </section>
     {/if}
   </main>

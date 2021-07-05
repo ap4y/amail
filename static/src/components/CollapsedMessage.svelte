@@ -1,15 +1,18 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { pushState, selectedMailbox, selectedThread } from "../stores/url";
   import FormattedAddress from "./FormattedAddress.svelte";
 
   export let message;
   export let level;
 
-  const dispatch = createEventDispatcher();
   let drag = false;
 
-  function onClick() {
-    dispatch("click", message.id);
+  function selectMessage() {
+    pushState({
+      mailbox: $selectedMailbox,
+      thread: $selectedThread,
+      message: message.id,
+    });
   }
 </script>
 
@@ -17,7 +20,7 @@
   class="p-3 flex flex-row justify-between items-center bg-gray-100 border-b-2 border-gray-200 cursor-pointer"
   on:mousedown={() => (drag = false)}
   on:mousemove={() => (drag = true)}
-  on:mouseup={() => !drag && onClick()}
+  on:mouseup={() => !drag && selectMessage()}
 >
   <div
     class="flex flex-row items-center"

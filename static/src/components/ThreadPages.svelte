@@ -1,17 +1,16 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { threadsPerPage } from "../config";
+  import { currentPage } from "../stores/threads";
+  import { currentMailbox } from "../stores/mailboxes";
 
-  export let currentPage;
-  export let lastPage;
-
-  const dispatch = createEventDispatcher();
+  $: lastPage = Math.ceil($currentMailbox.total / threadsPerPage);
 </script>
 
 <div class="flex flex-row items-center ml-auto text-gray-300">
   <button
-    disabled={currentPage == 0}
+    disabled={$currentPage == 0}
     class="border-0 rounded hover:bg-gray-700 active:bg-gray-800 focus:outline-none disabled:opacity-50 disabled:bg-transparent"
-    on:click={() => dispatch("previous-page")}
+    on:click={() => currentPage.update((page) => page - 1)}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -22,11 +21,11 @@
       /></svg
     >
   </button>
-  <span class="font-semibold px-3">{currentPage + 1}</span>
+  <span class="font-semibold px-3">{$currentPage + 1}</span>
   <button
-    disabled={currentPage == lastPage - 1}
+    disabled={$currentPage == lastPage - 1}
     class="border-0 rounded hover:bg-gray-700 active:bg-gray-800 focus:outline-none disabled:opacity-50 disabled:bg-transparent"
-    on:click={() => dispatch("next-page")}
+    on:click={() => currentPage.update((page) => page + 1)}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
