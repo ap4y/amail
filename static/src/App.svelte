@@ -17,6 +17,7 @@
     pushState,
     selectedMailbox,
     selectedThread,
+    searchTerms,
   } from "./stores/url";
   import mailboxes, { currentMailbox } from "./stores/mailboxes";
   import threads from "./stores/threads";
@@ -38,17 +39,14 @@
     "selected",
     $selectedMailbox,
     $selectedThread,
-    $selectedMessage
+    $selectedMessage,
+    $searchTerms
   );
 
-  $: if ($currentMailbox.folder) {
-    const title =
-      $currentMailbox.unread > 0
-        ? `(${$currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
-        : mailboxTitles[$selectedMailbox];
-    document.title = title;
-  }
-
+  $: document.title =
+    $currentMailbox?.unread > 0
+      ? `(${$currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
+      : mailboxTitles[$selectedMailbox] || $searchTerms;
   $: if ($selectedThread) scrollToThread();
   $: if ($selectedMessage) scrollToMessage();
 

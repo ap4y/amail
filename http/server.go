@@ -39,7 +39,7 @@ func NewServer(primaryEmail string) (*Server, error) {
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/mailboxes", s.mailboxesHandler)
-		r.Get("/mailboxes/{mailboxID}", s.mailboxHandler)
+		r.Get("/search/{term}", s.searchHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
 	})
@@ -51,6 +51,10 @@ func NewServer(primaryEmail string) (*Server, error) {
 			fs.ServeHTTP(w, r)
 		}))
 	}
+	r.Handle("/search*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/"
+		fs.ServeHTTP(w, r)
+	}))
 	r.Handle("/*", fs)
 
 	s.Handler = r
@@ -73,7 +77,7 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		data.Mailboxes[mailbox] = MailboxStats{mailbox, folder, unread, total}
+		data.Mailboxes[mailbox] = MailboxStats{mailbox, "folder:" + folder, unread, total}
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -81,8 +85,8 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) mailboxHandler(w http.ResponseWriter, r *http.Request) {
-	mailboxID := chi.URLParam(r, "mailboxID")
+func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
+	term := chi.URLParam(r, "term")
 	params := r.URL.Query()
 
 	perPage := 50
@@ -95,13 +99,20 @@ func (s *Server) mailboxHandler(w http.ResponseWriter, r *http.Request) {
 		page = val
 	}
 
-	threads, err := s.client.Search("folder:"+mailboxID, perPage, page*perPage)
+	threads, err := s.client.Search(term, perPage, page*perPage)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(threads); err != nil {
+	total, err := s.client.Count(term)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res := Threads{total, threads}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }

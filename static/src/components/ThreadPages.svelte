@@ -1,9 +1,8 @@
 <script>
   import { threadsPerPage } from "../config";
-  import { currentPage } from "../stores/threads";
-  import { currentMailbox } from "../stores/mailboxes";
+  import { currentPage, totalThreads } from "../stores/threads";
 
-  $: lastPage = Math.ceil($currentMailbox.total / threadsPerPage);
+  $: lastPage = Math.ceil($totalThreads / threadsPerPage);
 </script>
 
 <div class="flex flex-row items-center ml-auto text-gray-300">

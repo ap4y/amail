@@ -1,3 +1,18 @@
+<script>
+  import { pushState, searchTerms } from "../stores/url";
+
+  let terms = $searchTerms;
+
+  function onKeyPress({ charCode }) {
+    if (charCode === 13) {
+      pushState(
+        { mailbox: "search", searchTerms: terms },
+        `/search/?terms=${escape(terms)}`
+      );
+    }
+  }
+</script>
+
 <div class="relative text-gray-300">
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -11,5 +26,7 @@
     type="search"
     class="w-96 h-full outline-none pl-8 pr-1 py-1 bg-gray-600 text-sm border rounded border-gray-500 hover:border-gray-400 focus:border-gray-400"
     placeholder="Search threads"
+    on:keypress={onKeyPress}
+    bind:value={terms}
   />
 </div>

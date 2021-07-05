@@ -28,11 +28,8 @@ class ApiClient {
     return this.request("GET", "/mailboxes");
   }
 
-  threads(folder, page = 0, perPage = 50) {
-    return this.request(
-      "GET",
-      `/mailboxes/${folder}?page=${page}&per=${perPage}`
-    );
+  threads(terms, page = 0, perPage = 50) {
+    return this.request("GET", `/search/${terms}?page=${page}&per=${perPage}`);
   }
 
   thread(threadId) {

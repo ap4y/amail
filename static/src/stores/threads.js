@@ -10,12 +10,21 @@ selectedMailbox.subscribe(() => {
   currentPage.set(0);
 });
 
+export const totalThreads = writable(0);
+
 const threads = derived(
   [currentMailbox, currentPage],
   ([$currentMailbox, $currentPage], set) => {
-    ApiClient.default
-      .threads($currentMailbox.folder, $currentPage, threadsPerPage)
-      .then((res) => set(res));
+    if (!$currentMailbox?.terms) {
+      set([]);
+    } else {
+      ApiClient.default
+        .threads($currentMailbox.terms, $currentPage, threadsPerPage)
+        .then(({ total, threads }) => {
+          totalThreads.set(total);
+          set(threads);
+        });
+    }
   },
   []
 );

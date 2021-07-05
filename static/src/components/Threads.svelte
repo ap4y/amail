@@ -1,5 +1,10 @@
 <script>
-  import { pushState, selectedMailbox, selectedThread } from "../stores/url";
+  import url, {
+    pushState,
+    selectedMailbox,
+    selectedThread,
+    searchTerms,
+  } from "../stores/url";
   import threads from "../stores/threads";
 
   function unreadClasses({ tags }) {
@@ -9,7 +14,14 @@
   }
 
   function selectThread({ mailbox, thread }) {
-    pushState({ mailbox, thread }, `/${mailbox}/${thread}`);
+    if ($searchTerms) {
+      pushState(
+        { mailbox, thread, searchTerms: $searchTerms },
+        `/${mailbox}/${thread}?terms=${escape($searchTerms)}`
+      );
+    } else {
+      pushState({ mailbox, thread }, `/${mailbox}/${thread}`);
+    }
   }
 </script>
 

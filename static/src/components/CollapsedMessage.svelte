@@ -1,5 +1,10 @@
 <script>
-  import { pushState, selectedMailbox, selectedThread } from "../stores/url";
+  import {
+    pushState,
+    selectedMailbox,
+    selectedThread,
+    searchTerms,
+  } from "../stores/url";
   import FormattedAddress from "./FormattedAddress.svelte";
 
   export let message;
@@ -8,11 +13,20 @@
   let drag = false;
 
   function selectMessage() {
-    pushState({
-      mailbox: $selectedMailbox,
-      thread: $selectedThread,
-      message: message.id,
-    });
+    if ($searchTerms) {
+      pushState({
+        mailbox: $selectedMailbox,
+        thread: $selectedThread,
+        message: message.id,
+        searchTerms: $searchTerms,
+      });
+    } else {
+      pushState({
+        mailbox: $selectedMailbox,
+        thread: $selectedThread,
+        message: message.id,
+      });
+    }
   }
 </script>
 
