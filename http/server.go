@@ -12,13 +12,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
-var mailboxes = map[string]string{
-	"inbox":   "INBOX",
-	"archive": "Archive",
-	"sent":    "Sent",
-	"drafts":  "Drafts",
-	"junk":    "Junk",
-	"trash":   "Trash",
+var mailboxes = []Mailbox{
+	{"inbox", "folder:INBOX"},
+	{"archive", "folder:Archive"},
+	{"sent", "folder:Sent"},
+	{"drafts", "folder:Drafts"},
+	{"junk", "folder:Junk"},
+	{"trash", "folder:Trash"},
+	{"personal", "folder:INBOX to:mail@ap4y.me"},
+	{"openbsd", "folder:INBOX to:tech@openbsd.org"},
 }
 
 type Server struct {
@@ -45,8 +47,8 @@ func NewServer(primaryEmail string) (*Server, error) {
 	})
 
 	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
-	for mailbox := range mailboxes {
-		r.Handle(fmt.Sprintf("/%s*", mailbox), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	for _, mailbox := range mailboxes {
+		r.Handle(fmt.Sprintf("/%s*", mailbox.ID), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			r.URL.Path = "/"
 			fs.ServeHTTP(w, r)
 		}))
@@ -62,22 +64,22 @@ func NewServer(primaryEmail string) (*Server, error) {
 }
 
 func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
-	data := Mailboxes{s.primaryEmail, map[string]MailboxStats{}}
+	data := AccountData{s.primaryEmail, make([]MailboxStats, len(mailboxes))}
 
-	for mailbox, folder := range mailboxes {
-		unread, err := s.client.Count("folder:" + folder + " tag:unread")
+	for idx, mailbox := range mailboxes {
+		unread, err := s.client.Count(mailbox.Terms + " tag:unread")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		total, err := s.client.Count("folder:" + folder)
+		total, err := s.client.Count(mailbox.Terms)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		data.Mailboxes[mailbox] = MailboxStats{mailbox, "folder:" + folder, unread, total}
+		data.Mailboxes[idx] = MailboxStats{mailbox, unread, total}
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
