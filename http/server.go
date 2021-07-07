@@ -44,6 +44,7 @@ func NewServer(primaryEmail string) (*Server, error) {
 		r.Get("/search/{term}", s.searchHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
+		r.Put("/messages/{messageID}/tags", s.messageTagsHandler)
 	})
 
 	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
@@ -73,13 +74,7 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		total, err := s.client.Count(mailbox.Terms)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		data.Mailboxes[idx] = MailboxStats{mailbox, unread, total}
+		data.Mailboxes[idx] = MailboxStats{mailbox, unread}
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -150,4 +145,29 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeContent(w, r, "attachment", time.Now(), attachment)
+}
+
+func (s *Server) messageTagsHandler(w http.ResponseWriter, r *http.Request) {
+	base64ID := chi.URLParam(r, "messageID")
+
+	messageID, err := base64.StdEncoding.DecodeString(base64ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var tags []string
+	if err := json.NewDecoder(r.Body).Decode(&tags); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.client.Tag("id:"+string(messageID), tags); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 }

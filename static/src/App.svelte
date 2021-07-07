@@ -19,13 +19,14 @@
     selectedThread,
     searchTerms,
   } from "./stores/url";
-  import mailboxes, { currentMailbox } from "./stores/mailboxes";
-  import threads from "./stores/threads";
+  import mailboxes, { address } from "./stores/mailboxes";
+  import threads, { currentPage } from "./stores/threads";
   import thread, { selectedMessage } from "./stores/thread";
+
+  import { markAsRead } from "./lib/tagging";
 
   const client = ApiClient.default;
 
-  let address = "";
   let refreshing = false;
   let threadList, messageList;
   let sidebarCollapsed = true;
@@ -43,25 +44,27 @@
     $searchTerms
   );
 
+  $: currentMailbox =
+    $searchTerms?.length > 0
+      ? { id: "search", terms: $searchTerms }
+      : $mailboxes.find(({ id }) => id === $selectedMailbox);
+  $: if ($selectedMailbox) currentPage.set(0);
   $: document.title =
-    $currentMailbox?.unread > 0
-      ? `(${$currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
+    currentMailbox?.unread > 0
+      ? `(${currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
       : mailboxTitles[$selectedMailbox] || $searchTerms;
+
   $: if ($selectedThread) scrollToThread();
   $: if ($selectedMessage) scrollToMessage();
 
-  async function refreshMailboxes() {
+  $: threads.fetch(currentMailbox?.terms, $currentPage);
+  $: thread.fetch($selectedThread);
+  $: markAsRead($thread, $selectedMessage);
+
+  function refreshMailboxes() {
     refreshing = true;
     const start = Date.now();
-
-    try {
-      const res = await ApiClient.default.mailboxes();
-      mailboxes.set(res.mailboxes);
-      address = res.address;
-    } catch (e) {
-      console.log(`Failed to fetch mailboxes: ${e.message}`);
-    }
-
+    mailboxes.fetch();
     setTimeout(() => (refreshing = false), 1000 - Date.now() + start);
   }
 
@@ -105,7 +108,7 @@
       } items-center p-4`}
     >
       {#if !sidebarCollapsed}
-        <h2 class="text-gray-100 font-semibold">{address}</h2>
+        <h2 class="text-gray-100 font-semibold">{$address}</h2>
       {/if}
 
       <RefreshButton {refreshing} on:click={refreshMailboxes} />

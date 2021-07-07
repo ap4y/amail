@@ -15,7 +15,6 @@ type AccountData struct {
 type MailboxStats struct {
 	Mailbox
 	Unread int `json:"unread"`
-	Total  int `json:"total"`
 }
 
 type Threads struct {

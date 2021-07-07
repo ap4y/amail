@@ -35,6 +35,10 @@ class ApiClient {
   thread(threadId) {
     return this.request("GET", `/threads/${threadId}`);
   }
+
+  updateTags(messageId, tags) {
+    return this.request("PUT", `/messages/${btoa(messageId)}/tags`, tags);
+  }
 }
 
 export class ApiError extends Error {
