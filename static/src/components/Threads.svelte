@@ -1,27 +1,14 @@
 <script>
-  import url, {
-    pushState,
-    selectedMailbox,
-    selectedThread,
-    searchTerms,
-  } from "../stores/url";
-  import threads from "../stores/threads";
+  import url, { selectedMailbox, selectedThread } from "../stores/url";
+  import { currentMailbox } from "../stores/mailboxes";
+  import threads, { currentPage } from "../stores/threads";
+
+  $: threads.fetch($currentMailbox?.terms, $currentPage);
 
   function unreadClasses({ tags }) {
     return tags.includes("unread")
       ? "bg-gray-50 text-red-500 visited:text-red-500"
       : "bg-gray-100 text-gray-600 visited:text-gray-600";
-  }
-
-  function selectThread({ mailbox, thread }) {
-    if ($searchTerms) {
-      pushState(
-        { mailbox, thread, searchTerms: $searchTerms },
-        `/${mailbox}/${thread}?terms=${escape($searchTerms)}`
-      );
-    } else {
-      pushState({ mailbox, thread }, `/${mailbox}/${thread}`);
-    }
   }
 </script>
 
@@ -33,7 +20,7 @@
       thread
     )} ${$selectedThread === thread.thread ? "bg-red-100 font-semibold" : ""}`}
     on:click|preventDefault={() =>
-      selectThread({ mailbox: $selectedMailbox, thread: thread.thread })}
+      url.selectThread($selectedMailbox, thread.thread)}
   >
     <span class="px-3 w-28">{thread.date_relative}</span>
     <span class="pr-6 w-40 truncate">{thread.authors}</span>

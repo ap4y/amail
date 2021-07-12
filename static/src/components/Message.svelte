@@ -1,5 +1,5 @@
 <script>
-  import { pushState, selectedMailbox } from "../stores/url";
+  import url from "../stores/url";
 
   import BodyItem from "./BodyItem.svelte";
   import ToolbarButton from "./ToolbarButton.svelte";
@@ -7,11 +7,8 @@
 
   export let message;
 
-  function closeThread() {
-    pushState(
-      { mailbox: $selectedMailbox, thread: null, message: null },
-      `/${$selectedMailbox}`
-    );
+  function move(folder) {
+    console.log(folder);
   }
 </script>
 
@@ -20,7 +17,7 @@
 
   <button
     class="absolute w-5 top-3 right-3 text-gray-500 order-0 hover:text-gray-800 active:text-gray-500 focus:outline-none"
-    on:click={() => closeThread()}
+    on:click={() => url.deselectThread()}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -44,7 +41,11 @@
       >
     </ToolbarButton>
 
-    <ToolbarButton tooltip="Move to archive" class="mr-1">
+    <ToolbarButton
+      tooltip="Move to archive"
+      class="mr-1"
+      on:click={() => move("archive")}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -74,7 +75,11 @@
         /></svg
       >
     </ToolbarButton>
-    <ToolbarButton tooltip="Move to trash" class="mr-3">
+    <ToolbarButton
+      tooltip="Move to trash"
+      class="mr-3"
+      on:click={() => move("trash")}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"

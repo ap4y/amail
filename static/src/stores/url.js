@@ -15,21 +15,54 @@ const update = ({ state }) => {
   const url = new URL(window.location.href);
   url.mailbox = state?.mailbox;
   url.thread = state?.thread;
-  url.message = state?.message;
   url.searchTerms = state?.searchTerms;
   href.set(url);
 };
 
 window.addEventListener("popstate", update);
 
-export function pushState(state, url) {
+function pushState(state, url) {
   history.pushState(state, "", url);
   update({ state });
 }
 
 const url = derived(href, ($href) => $href);
 
-export default url;
+function selectMailbox(mailbox) {
+  pushState({ mailbox }, `/${mailbox}`);
+}
+
+function selectThread(mailbox, thread) {
+  const state = history.state;
+  const newState = { mailbox, thread, searchTerms: state.searchTerms };
+  let path = `/${mailbox}/${thread}`;
+  if (state.searchTerms) {
+    path += `?terms=${escape(state.searchTerms)}`;
+  }
+
+  pushState(newState, path);
+}
+
+function deselectThread() {
+  const state = history.state;
+
+  pushState({ mailbox: state.mailbox, thread: null }, `/${state.mailbox}`);
+}
+
+function search(terms) {
+  pushState(
+    { mailbox: "search", searchTerms: terms },
+    `/search/?terms=${escape(terms)}`
+  );
+}
+
+export default {
+  subscribe: url.subscribe,
+  selectMailbox,
+  selectThread,
+  deselectThread,
+  search,
+};
 
 export const selectedMailbox = derived(url, ($url) =>
   $url.mailbox?.length > 0 ? $url.mailbox : mailboxIds[0]

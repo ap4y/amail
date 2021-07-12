@@ -1,14 +1,11 @@
 <script>
-  import { pushState, searchTerms } from "../stores/url";
+  import url, {  searchTerms } from "../stores/url";
 
   let terms = $searchTerms;
 
   function onKeyPress({ charCode }) {
     if (charCode === 13) {
-      pushState(
-        { mailbox: "search", searchTerms: terms },
-        `/search/?terms=${escape(terms)}`
-      );
+      url.search(terms);
     }
   }
 </script>

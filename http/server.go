@@ -13,14 +13,12 @@ import (
 )
 
 var mailboxes = []Mailbox{
-	{"inbox", "folder:INBOX"},
-	{"archive", "folder:Archive"},
-	{"sent", "folder:Sent"},
-	{"drafts", "folder:Drafts"},
-	{"junk", "folder:Junk"},
-	{"trash", "folder:Trash"},
-	{"personal", "folder:INBOX to:mail@ap4y.me"},
-	{"openbsd", "folder:INBOX to:tech@openbsd.org"},
+	{"inbox", "tag:inbox to:mail@ap4y.me"},
+	{"archive", "tag:archive"},
+	{"sent", "tag:sent"},
+	{"junk", "tag:junk"},
+	{"trash", "tag:trash"},
+	{"openbsd", "to:tech@openbsd.org and tag:inbox"},
 }
 
 type Server struct {
@@ -68,7 +66,7 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 	data := AccountData{s.primaryEmail, make([]MailboxStats, len(mailboxes))}
 
 	for idx, mailbox := range mailboxes {
-		unread, err := s.client.Count(mailbox.Terms + " tag:unread")
+		unread, err := s.client.Count(mailbox.Terms + " and tag:unread")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -123,7 +121,7 @@ func (s *Server) threadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(messages[0][0]); err != nil {
+	if err := json.NewEncoder(w).Encode(messages[0]); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }

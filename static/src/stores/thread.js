@@ -1,8 +1,8 @@
-import { writable, derived } from "svelte/store";
+import { writable } from "svelte/store";
 import ApiClient from "../client";
 import url from "./url";
 
-const { subscribe, set } = writable(null);
+const { subscribe, set, update } = writable(null);
 
 const fetch = async (selectedThread) => {
   if (!selectedThread) {
@@ -16,10 +16,4 @@ const fetch = async (selectedThread) => {
   return thread;
 };
 
-const thread = { subscribe, fetch };
-
-export default thread;
-
-export const selectedMessage = derived([url, thread], ([$url, $thread]) =>
-  $url.message?.length > 0 ? $url.message : $thread ? $thread[0].id : null
-);
+export default { subscribe, fetch };

@@ -24,6 +24,7 @@
 >
   <button
     class="w-9 p-2 rounded hover:border-gray-500 bg-white text-gray-700 active:bg-gray-300 focus:outline-none border"
+    on:click
   >
     <slot />
   </button>

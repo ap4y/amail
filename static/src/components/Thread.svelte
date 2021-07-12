@@ -1,24 +1,22 @@
 <script>
   import Message from "./Message.svelte";
   import CollapsedMessage from "./CollapsedMessage.svelte";
-  import { selectedMessage } from "../stores/thread";
+  import selectedMessage from "../stores/message";
 
   export let thread;
   export let level = 0;
-
-  $: [message, subthreads] = thread;
 </script>
 
 <div>
-  <div data-message={message.id}>
-    {#if message.id !== $selectedMessage}
-      <CollapsedMessage {message} {level} />
-    {:else}
-      <Message {message} />
-    {/if}
-  </div>
+  {#each thread as [message, subthread]}
+    <div data-message={message.id}>
+      {#if message.id !== $selectedMessage?.id}
+        <CollapsedMessage {message} {level} />
+      {:else}
+        <Message message={$selectedMessage} />
+      {/if}
+    </div>
 
-  {#each subthreads as thread}
-    <svelte:self {thread} level={level + 1} />
+    <svelte:self thread={subthread} level={level + 1} />
   {/each}
 </div>
