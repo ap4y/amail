@@ -1,20 +1,20 @@
 import ApiClient from "../client";
 import mailboxes from "../stores/mailboxes";
-import selectedMessage from "../stores/message";
+import threads from "../stores/threads";
+import thread from "../stores/thread";
 
-export async function markAsRead(message) {
-  if (!message || !message.tags.includes("unread")) return;
+export async function updateTags(threadId, messageId, updates) {
+  if (!messageId || !threadId) return [];
 
-  await ApiClient.default.updateTags(message.id, ["-unread"]);
-  selectedMessage.updateTags(message.tags.filter((tag) => tag !== "unread"));
+  const newTags = await ApiClient.default.updateTags(messageId, updates);
+
+  const threadTags = thread.updateTags(messageId, newTags);
+  threads.setTags(threadId, threadTags);
   mailboxes.updateUnreadCounters();
+
+  return newTags;
 }
 
-function getThreadTags(set, thread) {
-  for (const [message, subThread] of thread) {
-    message.tags.forEach((tag) => set.add(tag));
-    getThreadTags(set, subThread);
-  }
-
-  return set;
+export async function markAsRead(threadId, messageId) {
+  return await updateTags(threadId, messageId, ["-unread"]);
 }

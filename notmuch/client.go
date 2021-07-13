@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -86,6 +87,21 @@ func (c *Client) Tag(term string, tags []string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) Dump(term string) ([]string, error) {
+	res, err := c.exec("dump", term)
+	if err != nil {
+		return nil, err
+	}
+
+	re := regexp.MustCompile(`[+](.*?)\s`)
+	matches := re.FindAllSubmatch(res, -1)
+	tags := make([]string, len(matches))
+	for idx, match := range re.FindAllSubmatch(res, -1) {
+		tags[idx] = string(match[1])
+	}
+	return tags, nil
 }
 
 func (c *Client) Reply(term, replyTo string) (*Reply, error) {

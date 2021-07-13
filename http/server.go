@@ -16,7 +16,7 @@ var mailboxes = []Mailbox{
 	{"inbox", "tag:inbox to:mail@ap4y.me"},
 	{"archive", "tag:archive"},
 	{"sent", "tag:sent"},
-	{"junk", "tag:junk"},
+	{"spam", "tag:spam"},
 	{"trash", "tag:trash"},
 	{"openbsd", "to:tech@openbsd.org and tag:inbox"},
 }
@@ -165,7 +165,29 @@ func (s *Server) messageTagsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
+	newTags, err := s.client.Dump("id:" + string(messageID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(newTags); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+}
+
+func messageTags(message []interface{}) (tags []interface{}) {
+	tags = make([]interface{}, 0)
+
+	thread, ok := message[0].([]interface{})
+	if !ok {
+		return
+	}
+
+	threadMessage, ok := thread[0].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	return threadMessage["tags"].([]interface{})
 }

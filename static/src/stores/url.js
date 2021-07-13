@@ -1,5 +1,7 @@
 import { derived, writable } from "svelte/store";
 import { mailboxIds } from "../config";
+import { currentPage } from "./threads";
+import selectedMessage from "./message";
 
 const initialURL = new URL(window.location.href);
 const href = writable(initialURL);
@@ -29,6 +31,7 @@ function pushState(state, url) {
 const url = derived(href, ($href) => $href);
 
 function selectMailbox(mailbox) {
+  currentPage.set(0);
   pushState({ mailbox }, `/${mailbox}`);
 }
 
@@ -46,6 +49,7 @@ function selectThread(mailbox, thread) {
 function deselectThread() {
   const state = history.state;
 
+  selectedMessage.selectMessage(null);
   pushState({ mailbox: state.mailbox, thread: null }, `/${state.mailbox}`);
 }
 

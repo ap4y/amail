@@ -13,17 +13,16 @@
 
   import ApiClient from "./client";
   import { mailboxIds, mailboxTitles } from "./config";
+  import { markAsRead } from "./lib/tagging";
+
   import url, {
     selectedMailbox,
     selectedThread,
     searchTerms,
   } from "./stores/url";
   import mailboxes, { address } from "./stores/mailboxes";
-  import { currentPage } from "./stores/threads";
-  import thread from "./stores/thread";
+  import thread, { findMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
-
-  import { markAsRead } from "./lib/tagging";
 
   const client = ApiClient.default;
 
@@ -35,12 +34,11 @@
     refreshMailboxes();
   });
 
-  $: console.log("params", $url.mailbox, $url.thread, $url.message);
   $: console.log(
     "selected",
     $selectedMailbox,
     $selectedThread,
-    $selectedMessage?.id,
+    $selectedMessage,
     $searchTerms
   );
 
@@ -48,17 +46,18 @@
     $searchTerms?.length > 0
       ? { id: "search", terms: $searchTerms }
       : $mailboxes.find(({ id }) => id === $selectedMailbox);
-  $: if ($selectedMailbox) currentPage.set(0);
   $: document.title =
     currentMailbox?.unread > 0
       ? `(${currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
       : mailboxTitles[$selectedMailbox] || $searchTerms;
 
-  $: if ($selectedThread) scrollToThread();
-  $: if ($selectedMessage) scrollToMessage();
-
-  $: if ($thread) selectedMessage.selectMessage($thread, $thread[0][0].id);
-  $: markAsRead($selectedMessage);
+  $: if ($selectedThread) {
+    scrollToThread();
+    thread.fetch($selectedThread);
+  }
+  $: if ($selectedMessage)
+    scrollToMessage(findMessage($thread, $selectedMessage));
+  $: markAsRead($selectedThread, $selectedMessage);
 
   function refreshMailboxes() {
     refreshing = true;
@@ -85,11 +84,11 @@
     check();
   }
 
-  async function scrollToMessage() {
+  async function scrollToMessage(message) {
+    if (!message) return;
+
     await tick();
-    const item = messageList.querySelector(
-      `div[data-message="${$selectedMessage.id}"]`
-    );
+    const item = messageList.querySelector(`div[data-message="${message.id}"]`);
     item.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 </script>
@@ -146,14 +145,14 @@
       } flex-shrink-0 border-gray-300 overflow-y-auto`}
       bind:this={threadList}
     >
-      <Threads />
+      <Threads mailbox={currentMailbox} />
     </section>
 
-    {#await thread.fetch($selectedThread) then _}
+    {#if $selectedThread}
       <section class="flex-1 w-full overflow-y-auto" bind:this={messageList}>
         <Thread thread={$thread} />
       </section>
-    {/await}
+    {/if}
   </main>
 </div>
 

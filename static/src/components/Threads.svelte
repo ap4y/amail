@@ -1,9 +1,10 @@
 <script>
   import url, { selectedMailbox, selectedThread } from "../stores/url";
-  import { currentMailbox } from "../stores/mailboxes";
   import threads, { currentPage } from "../stores/threads";
 
-  $: threads.fetch($currentMailbox?.terms, $currentPage);
+  export let mailbox;
+
+  $: if (mailbox) threads.fetch(mailbox.terms, $currentPage);
 
   function unreadClasses({ tags }) {
     return tags.includes("unread")

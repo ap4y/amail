@@ -1,5 +1,10 @@
 <script>
-  import url from "../stores/url";
+  import { updateTags } from "../lib/tagging";
+
+  import url, { selectedMailbox, selectedThread } from "../stores/url";
+  import mailboxes from "../stores/mailboxes";
+  import thread from "../stores/thread";
+  import selectedMessage from "../stores/message";
 
   import BodyItem from "./BodyItem.svelte";
   import ToolbarButton from "./ToolbarButton.svelte";
@@ -7,8 +12,35 @@
 
   export let message;
 
+  function findOtherMessage(thread, messageId) {
+    if (!thread) return null;
+
+    for (const [message, subThread] of thread) {
+      if (message.id != messageId && message.tags.includes($selectedMailbox))
+        return message;
+
+      const match = findOtherMessage(subThread, messageId);
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  function markUnread() {
+    updateTags($selectedThread, message.id, ["+unread"]);
+  }
+
   function move(folder) {
-    console.log(folder);
+    const changes = [];
+    $mailboxes.forEach(({ id }) => id !== folder && changes.push(`-${id}`));
+    updateTags($selectedThread, message.id, [...changes, `+${folder}`]);
+
+    const other = findOtherMessage($thread, message.id);
+    if (other) {
+      selectedMessage.selectMessage(other.id);
+    } else {
+      url.deselectThread();
+    }
   }
 </script>
 
@@ -30,7 +62,12 @@
   </button>
 
   <div class="flex flex-row p-3 border-b border-t">
-    <ToolbarButton tooltip="Mark as unread" tooltipPosition="left" class="mr-3">
+    <ToolbarButton
+      tooltip="Mark as unread"
+      tooltipPosition="left"
+      class="mr-3"
+      on:click={() => markUnread()}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -55,7 +92,11 @@
         /></svg
       >
     </ToolbarButton>
-    <ToolbarButton tooltip="Move to inbox" class="mr-1">
+    <ToolbarButton
+      tooltip="Move to inbox"
+      class="mr-1"
+      on:click={() => move("inbox")}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -65,7 +106,11 @@
         /></svg
       >
     </ToolbarButton>
-    <ToolbarButton tooltip="Move to spam" class="mr-1">
+    <ToolbarButton
+      tooltip="Move to spam"
+      class="mr-1"
+      on:click={() => move("spam")}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
