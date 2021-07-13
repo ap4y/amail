@@ -1,7 +1,7 @@
 <script>
-  import url, {  searchTerms } from "../stores/url";
+  import url, { searchTerms } from "../stores/url";
 
-  let terms = $searchTerms;
+  $: terms = $searchTerms;
 
   function onKeyPress({ charCode }) {
     if (charCode === 13) {

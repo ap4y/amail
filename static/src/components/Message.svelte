@@ -12,14 +12,18 @@
 
   export let message;
 
-  function findOtherMessage(thread, messageId) {
+  function findOtherMessage(thread, messageId, tags) {
     if (!thread) return null;
 
     for (const [message, subThread] of thread) {
-      if (message.id != messageId && message.tags.includes($selectedMailbox))
+      if (
+        message.id != messageId &&
+        tags.every((tag) => message.tags.includes(tag))
+      ) {
         return message;
+      }
 
-      const match = findOtherMessage(subThread, messageId);
+      const match = findOtherMessage(subThread, messageId, tags);
       if (match) return match;
     }
 
@@ -31,12 +35,18 @@
   }
 
   function move(folder) {
-    const changes = [];
-    $mailboxes.forEach(({ id }) => id !== folder && changes.push(`-${id}`));
-    updateTags($selectedThread, message.id, [...changes, `+${folder}`]);
+    const fromTags = $mailboxes.find(({ id }) => id === $selectedMailbox).tags;
+    const toTags = $mailboxes.find(({ id }) => id === folder).tags;
 
-    const other = findOtherMessage($thread, message.id);
-    if (other) {
+    const changes = [];
+    $mailboxes.forEach(({ tags }) =>
+      tags.forEach((tag) => !toTags.includes(tag) && changes.push(`-${tag}`))
+    );
+    toTags.forEach((tag) => changes.push(`+${tag}`));
+
+    updateTags($selectedThread, message.id, changes);
+
+    if ((other = findOtherMessage($thread, message.id, fromTags))) {
       selectedMessage.selectMessage(other.id);
     } else {
       url.deselectThread();
@@ -78,62 +88,64 @@
       >
     </ToolbarButton>
 
-    <ToolbarButton
-      tooltip="Move to archive"
-      class="mr-1"
-      on:click={() => move("archive")}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        class="fill-current w-full"
-        ><path d="M0 0h24v24H0V0z" fill="none" /><path
-          d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"
-        /></svg
+    {#if $selectedMailbox !== "search"}
+      <ToolbarButton
+        tooltip="Move to archive"
+        class="mr-1"
+        on:click={() => move("archive")}
       >
-    </ToolbarButton>
-    <ToolbarButton
-      tooltip="Move to inbox"
-      class="mr-1"
-      on:click={() => move("inbox")}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        class="fill-current w-full"
-        ><path d="M0 0h24v24H0V0z" fill="none" /><path
-          d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"
-        /></svg
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="fill-current w-full"
+          ><path d="M0 0h24v24H0V0z" fill="none" /><path
+            d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"
+          /></svg
+        >
+      </ToolbarButton>
+      <ToolbarButton
+        tooltip="Move to inbox"
+        class="mr-1"
+        on:click={() => move("inbox")}
       >
-    </ToolbarButton>
-    <ToolbarButton
-      tooltip="Move to spam"
-      class="mr-1"
-      on:click={() => move("spam")}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        class="w-full fill-current"
-        ><path d="M0 0h24v24H0z" fill="none" /><path
-          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
-        /></svg
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="fill-current w-full"
+          ><path d="M0 0h24v24H0V0z" fill="none" /><path
+            d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"
+          /></svg
+        >
+      </ToolbarButton>
+      <ToolbarButton
+        tooltip="Move to spam"
+        class="mr-1"
+        on:click={() => move("spam")}
       >
-    </ToolbarButton>
-    <ToolbarButton
-      tooltip="Move to trash"
-      class="mr-3"
-      on:click={() => move("trash")}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        class="w-full fill-current"
-        ><path d="M0 0h24v24H0z" fill="none" /><path
-          d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-        /></svg
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="w-full fill-current"
+          ><path d="M0 0h24v24H0z" fill="none" /><path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
+          /></svg
+        >
+      </ToolbarButton>
+      <ToolbarButton
+        tooltip="Move to trash"
+        class="mr-3"
+        on:click={() => move("trash")}
       >
-    </ToolbarButton>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="w-full fill-current"
+          ><path d="M0 0h24v24H0z" fill="none" /><path
+            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+          /></svg
+        >
+      </ToolbarButton>
+    {/if}
 
     <ToolbarButton tooltip="Tag" class="mr-3">
       <svg

@@ -44,7 +44,7 @@
 
   $: currentMailbox =
     $searchTerms?.length > 0
-      ? { id: "search", terms: $searchTerms }
+      ? { id: "search", terms: $searchTerms, tags: [] }
       : $mailboxes.find(({ id }) => id === $selectedMailbox);
   $: document.title =
     currentMailbox?.unread > 0

@@ -13,12 +13,12 @@ import (
 )
 
 var mailboxes = []Mailbox{
-	{"inbox", "tag:inbox to:mail@ap4y.me"},
-	{"archive", "tag:archive"},
-	{"sent", "tag:sent"},
-	{"spam", "tag:spam"},
-	{"trash", "tag:trash"},
-	{"openbsd", "to:tech@openbsd.org and tag:inbox"},
+	{"inbox", "tag:inbox to:mail@ap4y.me", []string{"inbox"}},
+	{"archive", "tag:archive", []string{"archive"}},
+	{"sent", "tag:sent", []string{"sent"}},
+	{"spam", "tag:spam", []string{"spam"}},
+	{"trash", "tag:trash", []string{"trash"}},
+	{"openbsd", "to:tech@openbsd.org and tag:inbox", []string{"inbox"}},
 }
 
 type Server struct {
