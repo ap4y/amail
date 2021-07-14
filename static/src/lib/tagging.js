@@ -27,7 +27,7 @@ export async function updateThreadTags(threadId, updates) {
   );
 
   threads.setTags(threadId, newTags);
-  mailboxes.updateUnreadCounters();
+  await mailboxes.updateUnreadCounters();
 
   return newTags;
 }

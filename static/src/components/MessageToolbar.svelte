@@ -4,6 +4,7 @@
   import ToolbarButton from "./ToolbarButton.svelte";
   import url, { selectedMailbox, selectedThread } from "../stores/url";
   import mailboxes from "../stores/mailboxes";
+  import threads from "../stores/threads";
   import thread from "../stores/thread";
   import selectedMessage from "../stores/message";
 
@@ -31,6 +32,16 @@
     return null;
   }
 
+  function selectNextThread() {
+    const idx = $threads.findIndex(({ thread }) => thread === $selectedThread);
+    const nextThread = $threads[idx + 1];
+    if (nextThread) {
+      url.selectThread($selectedMailbox, nextThread.thread);
+    } else {
+      url.deselectThread();
+    }
+  }
+
   function tagChanges(fromMailbox, toMailbox) {
     const fromTags = $mailboxes.find(({ id }) => id === fromMailbox).tags;
     const toTags = $mailboxes.find(({ id }) => id === toMailbox).tags;
@@ -52,14 +63,14 @@
     if (other) {
       selectedMessage.selectMessage(other.id);
     } else {
-      url.deselectThread();
+      selectNextThread();
     }
   }
 
-  function deleteThread() {
+  async function deleteThread() {
     const { changes } = tagChanges($selectedMailbox, "trash");
-    updateThreadTags($selectedThread, changes);
-    url.deselectThread();
+    await updateThreadTags($selectedThread, [...changes, "-unread"]);
+    selectNextThread();
   }
 </script>
 
