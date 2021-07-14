@@ -6,7 +6,10 @@ import thread from "../stores/thread";
 export async function updateTags(threadId, messageId, updates) {
   if (!messageId || !threadId) return [];
 
-  const newTags = await ApiClient.default.updateTags(messageId, updates);
+  const newTags = await ApiClient.default.updateTags(
+    `id:${messageId}`,
+    updates
+  );
 
   const threadTags = thread.updateTags(messageId, newTags);
   threads.setTags(threadId, threadTags);
@@ -15,6 +18,22 @@ export async function updateTags(threadId, messageId, updates) {
   return newTags;
 }
 
-export async function markAsRead(threadId, messageId) {
-  return await updateTags(threadId, messageId, ["-unread"]);
+export async function updateThreadTags(threadId, updates) {
+  if (!threadId) return [];
+
+  const newTags = await ApiClient.default.updateTags(
+    `thread:${threadId}`,
+    updates
+  );
+
+  threads.setTags(threadId, newTags);
+  mailboxes.updateUnreadCounters();
+
+  return newTags;
+}
+
+export async function markAsRead(threadId, message) {
+  if (!message.tags.includes("unread")) return [];
+
+  return await updateTags(threadId, message.id, ["-unread"]);
 }

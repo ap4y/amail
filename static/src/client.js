@@ -36,8 +36,8 @@ class ApiClient {
     return this.request("GET", `/threads/${threadId}`);
   }
 
-  updateTags(messageId, tags) {
-    return this.request("PUT", `/messages/${btoa(messageId)}/tags`, tags);
+  updateTags(terms, tags) {
+    return this.request("PUT", "/tags", { terms, tags });
   }
 }
 

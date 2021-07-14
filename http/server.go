@@ -8,41 +8,48 @@ import (
 	"strconv"
 	"time"
 
+	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/notmuch"
 	"github.com/go-chi/chi"
+	"github.com/rs/zerolog"
 )
 
-var mailboxes = []Mailbox{
-	{"inbox", "tag:inbox to:mail@ap4y.me", []string{"inbox"}},
-	{"archive", "tag:archive", []string{"archive"}},
-	{"sent", "tag:sent", []string{"sent"}},
-	{"spam", "tag:spam", []string{"spam"}},
-	{"trash", "tag:trash", []string{"trash"}},
-	{"openbsd", "to:tech@openbsd.org and tag:inbox", []string{"inbox"}},
+var logger zerolog.Logger
+
+func SetLogger(l zerolog.Logger) {
+	logger = l
 }
 
 type Server struct {
 	http.Server
 
-	client       *notmuch.Client
-	primaryEmail string
+	client    *notmuch.Client
+	addresses []string
+	mailboxes []config.Mailbox
 }
 
-func NewServer(primaryEmail string) (*Server, error) {
+func NewServer(addresses []string, mailboxes []config.Mailbox) (*Server, error) {
 	c, err := notmuch.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
-	s := &Server{client: c, primaryEmail: primaryEmail}
+	s := &Server{client: c, addresses: addresses, mailboxes: mailboxes}
 
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				logger.Debug().Msgf("%s %s", r.Method, r.URL.Path)
+				next.ServeHTTP(w, r)
+			})
+		})
+
 		r.Get("/mailboxes", s.mailboxesHandler)
 		r.Get("/search/{term}", s.searchHandler)
+		r.Put("/tags", s.tagsHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
-		r.Put("/messages/{messageID}/tags", s.messageTagsHandler)
 	})
 
 	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
@@ -63,12 +70,12 @@ func NewServer(primaryEmail string) (*Server, error) {
 }
 
 func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
-	data := AccountData{s.primaryEmail, make([]MailboxStats, len(mailboxes))}
+	data := AccountData{s.addresses[0], make([]MailboxStats, len(s.mailboxes))}
 
-	for idx, mailbox := range mailboxes {
-		unread, err := s.client.Count(mailbox.Terms + " and tag:unread")
+	for idx, mailbox := range s.mailboxes {
+		unread, err := s.client.Count(mailbox.Terms+" and tag:unread", notmuch.CountOutputMessages)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendError(w, r, err, http.StatusBadRequest)
 			return
 		}
 
@@ -76,7 +83,7 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 	}
 }
 
@@ -96,19 +103,19 @@ func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	threads, err := s.client.Search(term, perPage, page*perPage)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	total, err := s.client.Count(term)
+	total, err := s.client.Count(term, notmuch.CountOutputThreads)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	res := Threads{total, threads}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 	}
 }
 
@@ -117,12 +124,12 @@ func (s *Server) threadHandler(w http.ResponseWriter, r *http.Request) {
 
 	messages, err := s.client.Show("thread:" + threadID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(messages[0]); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 	}
 }
 
@@ -132,62 +139,47 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 
 	messageID, err := base64.StdEncoding.DecodeString(base64ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	attachment, err := s.client.Attachment(string(messageID), partID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	http.ServeContent(w, r, "attachment", time.Now(), attachment)
 }
 
-func (s *Server) messageTagsHandler(w http.ResponseWriter, r *http.Request) {
-	base64ID := chi.URLParam(r, "messageID")
+func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Terms string   `json:"terms"`
+		Tags  []string `json:"tags"`
+	}{}
 
-	messageID, err := base64.StdEncoding.DecodeString(base64ID)
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := s.client.Tag(data.Terms, data.Tags); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	newTags, err := s.client.Dump(data.Terms)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var tags []string
-	if err := json.NewDecoder(r.Body).Decode(&tags); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := s.client.Tag("id:"+string(messageID), tags); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	newTags, err := s.client.Dump("id:" + string(messageID))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(newTags); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(w, r, err, http.StatusBadRequest)
 	}
 }
 
-func messageTags(message []interface{}) (tags []interface{}) {
-	tags = make([]interface{}, 0)
-
-	thread, ok := message[0].([]interface{})
-	if !ok {
-		return
-	}
-
-	threadMessage, ok := thread[0].(map[string]interface{})
-	if !ok {
-		return
-	}
-
-	return threadMessage["tags"].([]interface{})
+func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {
+	logger.Info().Err(err).Msgf("%s %s: %d", r.Method, r.URL.Path, http.StatusBadRequest)
+	http.Error(w, err.Error(), http.StatusBadRequest)
 }

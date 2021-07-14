@@ -16,6 +16,14 @@ const (
 	formatVersion = "4"
 )
 
+type CountOutputType string
+
+const (
+	CountOutputMessages CountOutputType = "messages"
+	CountOutputThreads  CountOutputType = "threads"
+	CountOutputFiles    CountOutputType = "files"
+)
+
 type Client struct {
 	binPath string
 }
@@ -65,8 +73,8 @@ func (c *Client) Attachment(messageID, partID string) (io.ReadSeeker, error) {
 	return bytes.NewReader(res), nil
 }
 
-func (c *Client) Count(term string) (int, error) {
-	out, err := c.exec("count", term)
+func (c *Client) Count(term string, output CountOutputType) (int, error) {
+	out, err := c.exec("count", "--output", string(output), term)
 	if err != nil {
 		return -1, err
 	}
@@ -95,7 +103,7 @@ func (c *Client) Dump(term string) ([]string, error) {
 		return nil, err
 	}
 
-	re := regexp.MustCompile(`[+](.*?)\s`)
+	re := regexp.MustCompile(`[+](\w*)\s`)
 	matches := re.FindAllSubmatch(res, -1)
 	tags := make([]string, len(matches))
 	for idx, match := range re.FindAllSubmatch(res, -1) {
@@ -130,7 +138,7 @@ func (c *Client) exec(cmd string, args ...string) ([]byte, error) {
 
 	out, err := ec.Output()
 	if err != nil {
-		return nil, fmt.Errorf("exec: %v", err)
+		return nil, fmt.Errorf("exec: %v. %s", err, out)
 	}
 
 	return out, nil

@@ -1,6 +1,5 @@
 import { writable } from "svelte/store";
 import ApiClient from "../client";
-import selectedMessage from "./message";
 
 const { subscribe, set, update } = writable(null);
 
@@ -34,7 +33,6 @@ const fetch = async (selectedThread) => {
 
   const thread = await ApiClient.default.thread(selectedThread);
   set(thread);
-  selectFirstMessage(thread);
 
   return thread;
 };
@@ -52,15 +50,14 @@ function updateTags(messageId, tags) {
   return [...threadTags];
 }
 
-function selectFirstMessage(thread) {
+export function getFirstMessage(thread) {
   const [firstThread] = thread;
   if (!firstThread) return null;
 
   const [message] = firstThread;
   if (!message) return null;
 
-  selectedMessage.selectMessage(message.id);
   return message;
 }
 
-export default { subscribe, fetch, updateTags, selectFirstMessage };
+export default { subscribe, fetch, updateTags };

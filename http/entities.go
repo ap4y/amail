@@ -1,12 +1,9 @@
 package http
 
-import "ap4y.me/cloud-mail/notmuch"
-
-type Mailbox struct {
-	ID    string   `json:"id"`
-	Terms string   `json:"terms"`
-	Tags  []string `json:"tags"`
-}
+import (
+	"ap4y.me/cloud-mail/config"
+	"ap4y.me/cloud-mail/notmuch"
+)
 
 type AccountData struct {
 	Address   string         `json:"address"`
@@ -14,7 +11,7 @@ type AccountData struct {
 }
 
 type MailboxStats struct {
-	Mailbox
+	config.Mailbox
 	Unread int `json:"unread"`
 }
 

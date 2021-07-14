@@ -1,4 +1,7 @@
 <script>
+  import { markAsRead } from "../lib/tagging";
+
+  import { selectedThread } from "../stores/url";
   import selectedMessage from "../stores/message";
 
   import FormattedAddress from "./FormattedAddress.svelte";
@@ -7,13 +10,18 @@
   export let level;
 
   let drag = false;
+
+  function selectMessage() {
+    selectedMessage.selectMessage(message.id);
+    markAsRead($selectedThread, message);
+  }
 </script>
 
 <div
   class="p-3 flex flex-row justify-between items-center bg-gray-100 border-b-2 border-gray-200 cursor-pointer"
   on:mousedown={() => (drag = false)}
   on:mousemove={() => (drag = true)}
-  on:mouseup={() => !drag && selectedMessage.selectMessage(message.id)}
+  on:mouseup={() => !drag && selectMessage()}
 >
   <div
     class="flex flex-row items-center"

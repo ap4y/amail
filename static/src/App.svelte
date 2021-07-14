@@ -21,7 +21,7 @@
     searchTerms,
   } from "./stores/url";
   import mailboxes, { address } from "./stores/mailboxes";
-  import thread, { findMessage } from "./stores/thread";
+  import thread, { getFirstMessage, findMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
 
   const client = ApiClient.default;
@@ -52,18 +52,25 @@
       : mailboxTitles[$selectedMailbox] || $searchTerms;
 
   $: if ($selectedThread) {
+    loadThread();
     scrollToThread();
-    thread.fetch($selectedThread);
   }
   $: if ($selectedMessage)
     scrollToMessage(findMessage($thread, $selectedMessage));
-  $: markAsRead($selectedThread, $selectedMessage);
 
   function refreshMailboxes() {
     refreshing = true;
     const start = Date.now();
     /* mailboxes.fetch(); */
     setTimeout(() => (refreshing = false), 1000 - Date.now() + start);
+  }
+
+  async function loadThread() {
+    const res = await thread.fetch($selectedThread);
+    const message = getFirstMessage(res);
+
+    selectedMessage.selectMessage(message.id);
+    markAsRead($selectedThread, message);
   }
 
   async function scrollToThread() {
