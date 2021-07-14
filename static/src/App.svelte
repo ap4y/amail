@@ -11,8 +11,7 @@
   import Threads from "./components/Threads.svelte";
   import Thread from "./components/Thread.svelte";
 
-  import ApiClient from "./client";
-  import { mailboxIds, mailboxTitles } from "./config";
+  import { mailboxTitles, refreshInterval } from "./config";
   import { markAsRead } from "./lib/tagging";
 
   import url, {
@@ -23,8 +22,6 @@
   import mailboxes, { address } from "./stores/mailboxes";
   import thread, { getFirstMessage, findMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
-
-  const client = ApiClient.default;
 
   let refreshing = false;
   let threadList, messageList;
@@ -57,6 +54,8 @@
   }
   $: if ($selectedMessage)
     scrollToMessage(findMessage($thread, $selectedMessage));
+
+  setInterval(() => refreshMailboxes(), refreshInterval);
 
   function refreshMailboxes() {
     refreshing = true;

@@ -17,3 +17,4 @@ export const mailboxTitles = {
 };
 
 export const threadsPerPage = 50;
+export const refreshInterval = 1000;
