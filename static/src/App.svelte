@@ -28,6 +28,7 @@
   let sidebarCollapsed = true;
 
   onMount(() => {
+    setInterval(() => refreshMailboxes(), refreshInterval);
     refreshMailboxes();
   });
 
@@ -55,12 +56,10 @@
   $: if ($selectedMessage)
     scrollToMessage(findMessage($thread, $selectedMessage));
 
-  setInterval(() => refreshMailboxes(), refreshInterval);
-
   function refreshMailboxes() {
     refreshing = true;
     const start = Date.now();
-    /* mailboxes.fetch(); */
+    mailboxes.updateUnreadCounters();
     setTimeout(() => (refreshing = false), 1000 - Date.now() + start);
   }
 
