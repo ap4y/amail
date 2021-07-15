@@ -13,6 +13,7 @@
 
   import { mailboxTitles, refreshInterval } from "./config";
   import { markAsRead } from "./lib/tagging";
+  import favicon from "./lib/favicon";
 
   import url, {
     selectedMailbox,
@@ -48,6 +49,9 @@
     currentMailbox?.unread > 0
       ? `(${currentMailbox.unread}) ${mailboxTitles[$selectedMailbox]}`
       : mailboxTitles[$selectedMailbox] || $searchTerms;
+  $: document.head.querySelector('link[rel="icon"]').href = favicon(
+    currentMailbox?.unread > 0
+  );
 
   $: if ($selectedThread) {
     loadThread();
