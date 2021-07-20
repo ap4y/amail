@@ -7,10 +7,18 @@ type Config struct {
 	Mailboxes       []Mailbox
 	TagRules        map[string]string
 	RefreshInterval time.Duration
+	Submission      Submission
 }
 
 type Mailbox struct {
 	ID         string   `json:"id"`
 	Terms      string   `json:"terms"`
 	ToggleTags []string `json:"tags"`
+}
+
+type Submission struct {
+	Hostname string
+	Port     int
+
+	Username string
 }

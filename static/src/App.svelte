@@ -10,6 +10,7 @@
   import ThreadPages from "./components/ThreadPages.svelte";
   import Threads from "./components/Threads.svelte";
   import Thread from "./components/Thread.svelte";
+  import MessageForm from "./components/MessageForm.svelte";
 
   import { mailboxTitles, refreshInterval } from "./config";
   import { markAsRead } from "./lib/tagging";
@@ -23,6 +24,7 @@
   import mailboxes, { address } from "./stores/mailboxes";
   import thread, { getFirstMessage, findMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
+  import newMessage from "./stores/new_message";
 
   let refreshing = false;
   let threadList, messageList;
@@ -122,7 +124,10 @@
     </div>
 
     <div class="px-4">
-      <ComposeButton collapsed={sidebarCollapsed} />
+      <ComposeButton
+        collapsed={sidebarCollapsed}
+        on:click={() => newMessage.create()}
+      />
     </div>
 
     <div class="p-4 flex-1">
@@ -163,6 +168,10 @@
       </section>
     {/if}
   </main>
+
+  {#if $newMessage}
+    <MessageForm on:close={() => newMessage.destroy()} />
+  {/if}
 </div>
 
 <style global>

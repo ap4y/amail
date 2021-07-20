@@ -10,6 +10,7 @@ import (
 
 	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/notmuch"
+	"ap4y.me/cloud-mail/smtp"
 	"github.com/go-chi/chi"
 	"github.com/rs/zerolog"
 )
@@ -23,18 +24,20 @@ func SetLogger(l zerolog.Logger) {
 type Server struct {
 	http.Server
 
-	client    *notmuch.Client
+	client     *notmuch.Client
+	smtpClient *smtp.Client
+
 	addresses []string
 	mailboxes []config.Mailbox
 }
 
-func NewServer(addresses []string, mailboxes []config.Mailbox) (*Server, error) {
+func NewServer(addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.Client) (*Server, error) {
 	c, err := notmuch.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
-	s := &Server{client: c, addresses: addresses, mailboxes: mailboxes}
+	s := &Server{client: c, smtpClient: smtpClient, addresses: addresses, mailboxes: mailboxes}
 
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
@@ -50,6 +53,7 @@ func NewServer(addresses []string, mailboxes []config.Mailbox) (*Server, error) 
 		r.Put("/tags", s.tagsHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
+		r.Post("/messages", s.sendMessageHandler)
 	})
 
 	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
@@ -182,4 +186,22 @@ func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
 func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {
 	logger.Info().Err(err).Msgf("%s %s: %d", r.Method, r.URL.Path, http.StatusBadRequest)
 	http.Error(w, err.Error(), http.StatusBadRequest)
+}
+
+func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
+	var msg *smtp.Message
+
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := s.smtpClient.Send(msg); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+	}
 }

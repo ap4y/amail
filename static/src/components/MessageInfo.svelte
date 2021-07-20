@@ -13,6 +13,12 @@
     <span class="inline-flex w-10">To: </span>
     {message.headers.To}
   </p>
+  {#if message.headers.Cc}
+    <p class="mb-2 text-gray-500">
+      <span class="inline-flex w-10">Cc: </span>
+      {message.headers.Cc}
+    </p>
+  {/if}
 
   <h3 class="mb-3">
     {message.headers.Subject}

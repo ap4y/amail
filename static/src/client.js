@@ -39,6 +39,10 @@ class ApiClient {
   updateTags(terms, tags) {
     return this.request("PUT", "/tags", { terms, tags });
   }
+
+  sendMessage(message) {
+    return this.request("POST", "/messages", message);
+  }
 }
 
 export class ApiError extends Error {

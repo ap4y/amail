@@ -5,6 +5,7 @@
 {#if collapsed}
   <button
     class="bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none w-8 text-white h-8 p-1 rounded border-0"
+    on:click
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -18,6 +19,7 @@
 {:else}
   <button
     class="bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none w-full text-white h-10 rounded border-0 font-semibold"
+    on:click
   >
     New message
   </button>

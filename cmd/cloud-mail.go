@@ -6,6 +6,7 @@ import (
 
 	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/http"
+	"ap4y.me/cloud-mail/smtp"
 	"ap4y.me/cloud-mail/tagger"
 	"github.com/rs/zerolog"
 )
@@ -31,6 +32,11 @@ var conf = config.Config{
 		"+trash -unread -inbox":   "folder:Trash",
 	},
 	RefreshInterval: time.Minute,
+	Submission: config.Submission{
+		Hostname: "mail.ap4y.me",
+		Port:     587,
+		Username: "ap4y",
+	},
 }
 
 var logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
@@ -39,6 +45,7 @@ func main() {
 	log := logger.With().Str("sys", "main").Timestamp().Logger()
 	tagger.SetLogger(logger.With().Str("sys", "tag").Timestamp().Logger())
 	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
+	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
 
 	t, err := tagger.New(conf.TagRules)
 	if err != nil {
@@ -57,7 +64,15 @@ func main() {
 		}
 	}()
 
-	s, err := http.NewServer(conf.Addresses, conf.Mailboxes)
+	if len(conf.Addresses) == 0 {
+		log.Fatal().Msg("Specify at least one address")
+	}
+
+	client := smtp.New(conf.Addresses[0], conf.Submission, auth(func(username, hostname string) (string, error) {
+		return "crews96/gust", nil
+	}))
+
+	s, err := http.NewServer(conf.Addresses, conf.Mailboxes, client)
 	if err != nil {
 		log.Fatal().Msgf("Error creating an http server: %s", err)
 	}
@@ -67,4 +82,10 @@ func main() {
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal().Msgf("Startup error: %s", err)
 	}
+}
+
+type auth func(string, string) (string, error)
+
+func (a auth) Password(username, hostname string) (string, error) {
+	return a(username, hostname)
 }
