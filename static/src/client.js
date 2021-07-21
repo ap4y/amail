@@ -43,6 +43,13 @@ class ApiClient {
   sendMessage(message) {
     return this.request("POST", "/messages", message);
   }
+
+  replyToMessage(messageId, replyTo) {
+    return this.request(
+      "GET",
+      `/messages/${btoa(messageId)}/reply?reply-to=${replyTo}`
+    );
+  }
 }
 
 export class ApiError extends Error {

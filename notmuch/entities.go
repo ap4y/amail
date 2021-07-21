@@ -32,10 +32,10 @@ type Message struct {
 }
 
 type MessageBody struct {
-	ID                 int    `json:"id"`
-	ContentType        string `json:"content-type"`
-	ContentDisposition string `json:"content-disposition"`
-	Content            string `json:"content"`
+	ID                 int         `json:"id"`
+	ContentType        string      `json:"content-type"`
+	ContentDisposition string      `json:"content-disposition"`
+	Content            interface{} `json:"content"`
 }
 
 type Reply struct {

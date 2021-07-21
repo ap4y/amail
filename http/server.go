@@ -52,8 +52,10 @@ func NewServer(addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.
 		r.Get("/search/{term}", s.searchHandler)
 		r.Put("/tags", s.tagsHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
-		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
+
 		r.Post("/messages", s.sendMessageHandler)
+		r.Get("/messages/{messageID}/reply", s.messageReplyHandler)
+		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
 	})
 
 	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
@@ -156,6 +158,27 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "attachment", time.Now(), attachment)
 }
 
+func (s *Server) messageReplyHandler(w http.ResponseWriter, r *http.Request) {
+	base64ID := chi.URLParam(r, "messageID")
+
+	messageID, err := base64.StdEncoding.DecodeString(base64ID)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	replyTo := r.URL.Query().Get("reply-to")
+	reply, err := s.client.Reply("id:"+string(messageID), notmuch.ReplyToType(replyTo))
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(reply); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+	}
+}
+
 func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Terms string   `json:"terms"`
@@ -183,11 +206,6 @@ func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {
-	logger.Info().Err(err).Msgf("%s %s: %d", r.Method, r.URL.Path, http.StatusBadRequest)
-	http.Error(w, err.Error(), http.StatusBadRequest)
-}
-
 func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	var msg *smtp.Message
 
@@ -204,4 +222,9 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}
+}
+
+func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {
+	logger.Info().Err(err).Msgf("%s %s: %d", r.Method, r.URL.Path, http.StatusBadRequest)
+	http.Error(w, err.Error(), http.StatusBadRequest)
 }

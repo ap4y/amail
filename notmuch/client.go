@@ -17,11 +17,15 @@ const (
 )
 
 type CountOutputType string
+type ReplyToType string
 
 const (
 	CountOutputMessages CountOutputType = "messages"
 	CountOutputThreads  CountOutputType = "threads"
 	CountOutputFiles    CountOutputType = "files"
+
+	ReplyToAll    ReplyToType = "all"
+	ReplyToSender ReplyToType = "sender"
 )
 
 type Client struct {
@@ -112,8 +116,8 @@ func (c *Client) Dump(term string) ([]string, error) {
 	return tags, nil
 }
 
-func (c *Client) Reply(term, replyTo string) (*Reply, error) {
-	args := []string{"--reply-to", replyTo, term}
+func (c *Client) Reply(term string, replyTo ReplyToType) (*Reply, error) {
+	args := []string{"--reply-to", string(replyTo), term}
 
 	var reply *Reply
 	if err := c.jsonExec(&reply, "reply", args...); err != nil {

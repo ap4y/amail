@@ -28,7 +28,7 @@
   <div
     class="px-3 py-2 flex flex-row items-center justify-between bg-gray-500 text-white"
   >
-    <span>New message</span>
+    <span>{$newMessage?.subject || "New message"}</span>
 
     <button
       class="w-5 text-white hover:text-gray-200 active:text-gray-400 focus:outline-none"

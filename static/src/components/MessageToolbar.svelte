@@ -1,12 +1,15 @@
 <script>
   import { updateTags, updateThreadTags } from "../lib/tagging";
 
-  import ToolbarButton from "./ToolbarButton.svelte";
+  import ApiClient from "../client";
   import url, { selectedMailbox, selectedThread } from "../stores/url";
   import mailboxes from "../stores/mailboxes";
   import threads from "../stores/threads";
   import thread from "../stores/thread";
   import selectedMessage from "../stores/message";
+  import newMessage from "../stores/new_message";
+
+  import ToolbarButton from "./ToolbarButton.svelte";
 
   export let message;
 
@@ -71,6 +74,11 @@
     const { changes } = tagChanges($selectedMailbox, "trash");
     await updateThreadTags($selectedThread, [...changes, "-unread"]);
     selectNextThread();
+  }
+
+  async function reply(replyTo) {
+    const reply = await ApiClient.default.replyToMessage(message.id, replyTo);
+    newMessage.reply(reply);
   }
 </script>
 
@@ -176,7 +184,7 @@
 </ToolbarButton>
 
 <div class="flex flex-row ml-auto">
-  <ToolbarButton tooltip="Reply" class="mr-1">
+  <ToolbarButton tooltip="Reply" class="mr-1" on:click={() => reply("sender")}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
@@ -186,7 +194,7 @@
       /></svg
     >
   </ToolbarButton>
-  <ToolbarButton tooltip="Reply all" class="mr-1">
+  <ToolbarButton tooltip="Reply all" class="mr-1" on:click={() => reply("all")}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
