@@ -12,6 +12,7 @@ type Config struct {
 
 type Mailbox struct {
 	ID         string   `json:"id"`
+	Folder     string   `json:"folder"`
 	Terms      string   `json:"terms"`
 	ToggleTags []string `json:"tags"`
 }

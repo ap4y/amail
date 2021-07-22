@@ -69,7 +69,7 @@ func (c *Client) Show(term string) ([][]interface{}, error) {
 }
 
 func (c *Client) Attachment(messageID, partID string) (io.ReadSeeker, error) {
-	res, err := c.exec("show", "--part", partID, "id:"+messageID)
+	res, err := c.exec("show", nil, "--part", partID, "id:"+messageID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c *Client) Attachment(messageID, partID string) (io.ReadSeeker, error) {
 }
 
 func (c *Client) Count(term string, output CountOutputType) (int, error) {
-	out, err := c.exec("count", "--output", string(output), term)
+	out, err := c.exec("count", nil, "--output", string(output), term)
 	if err != nil {
 		return -1, err
 	}
@@ -93,7 +93,7 @@ func (c *Client) Count(term string, output CountOutputType) (int, error) {
 
 func (c *Client) Tag(term string, tags []string) error {
 	args := append(tags, "--", term)
-	_, err := c.exec("tag", args...)
+	_, err := c.exec("tag", nil, args...)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (c *Client) Tag(term string, tags []string) error {
 }
 
 func (c *Client) Dump(term string) ([]string, error) {
-	res, err := c.exec("dump", term)
+	res, err := c.exec("dump", nil, term)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *Client) Reply(term string, replyTo ReplyToType) (*Reply, error) {
 }
 
 func (c *Client) Index() error {
-	_, err := c.exec("new")
+	_, err := c.exec("new", nil)
 	if err != nil {
 		return err
 	}
@@ -136,9 +136,24 @@ func (c *Client) Index() error {
 	return nil
 }
 
-func (c *Client) exec(cmd string, args ...string) ([]byte, error) {
+func (c *Client) Insert(folder string, msg io.Reader, tags ...string) error {
+	args := []string{"--folder", folder, "--keep"}
+	args = append(args, tags...)
+
+	_, err := c.exec("insert", msg, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) exec(cmd string, in io.Reader, args ...string) ([]byte, error) {
 	allArgs := append([]string{cmd}, args...)
 	ec := exec.Command(c.binPath, allArgs...)
+	if in != nil {
+		ec.Stdin = in
+	}
 
 	out, err := ec.Output()
 	if err != nil {

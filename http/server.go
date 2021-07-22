@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -214,9 +215,31 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.smtpClient.Send(msg); err != nil {
+	m, err := s.smtpClient.Send(msg)
+	if err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 		return
+	}
+
+	var mbox *config.Mailbox
+	for _, mailbox := range s.mailboxes {
+		if mailbox.ID == "sent" {
+			mbox = &mailbox
+			break
+		}
+	}
+
+	if mbox != nil && mbox.Folder != "" {
+		var buf bytes.Buffer
+		if _, err := m.WriteTo(&buf); err != nil {
+			sendError(w, r, err, http.StatusBadRequest)
+			return
+		}
+
+		if err := s.client.Insert(mbox.Folder, &buf); err != nil {
+			sendError(w, r, err, http.StatusBadRequest)
+			return
+		}
 	}
 
 	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
