@@ -2,7 +2,7 @@ export const mailboxIds = [
   "inbox",
   "archive",
   "sent",
-  "drafts",
+  "draft",
   "spam",
   "trash",
 ];
@@ -11,7 +11,7 @@ export const mailboxTitles = {
   inbox: "Inbox",
   archive: "Archive",
   sent: "Sent",
-  drafts: "Drafts",
+  draft: "Drafts",
   spam: "Spam",
   trash: "Trash",
 };
