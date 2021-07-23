@@ -77,6 +77,10 @@
           {:else}
             {text}
           {/if}
+
+          {#if block.lines[block.lines.length - 1] === ""}
+            {"\n"}
+          {/if}
         {/each}
       </p>
     {/if}
