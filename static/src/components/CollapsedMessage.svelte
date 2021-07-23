@@ -9,8 +9,6 @@
   export let message;
   export let level;
 
-  let drag = false;
-
   function selectMessage() {
     selectedMessage.selectMessage(message.id);
     markAsRead($selectedThread, message);
@@ -19,9 +17,7 @@
 
 <div
   class="p-3 flex flex-row justify-between items-center bg-gray-100 border-b-2 border-gray-200 cursor-pointer"
-  on:mousedown={() => (drag = false)}
-  on:mousemove={() => (drag = true)}
-  on:mouseup={() => !drag && selectMessage()}
+  on:click={() => selectMessage()}
 >
   <div
     class="flex flex-row items-center"
