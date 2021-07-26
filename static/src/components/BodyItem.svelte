@@ -89,14 +89,15 @@
   <p class="text-lg">Email has no plaintext content.</p>
 {/if}
 
-{#if content.html.length > 0}
-  <button
-    class="mt-2 px-4 py-1 bg-red-400 text-white rounded border-none"
-    on:click={openHTML}>Open HTML</button
+{#each content.html as block}
+  <a
+    href={`/api/messages/${messageId}/parts/${block.id}`}
+    class="block mt-1 text-red-400 hover:text-red-500 font-semibold underline"
+    target="_blank">Open HTML</a
   >
-{/if}
+{/each}
 
-<div class="flex flex-row flex-wrap mt-4 pt-3">
+<div class="flex flex-row flex-wrap mt-3">
   {#each content.attach as attach}
     <a
       href={`/api/messages/${messageId}/parts/${attach.id}`}

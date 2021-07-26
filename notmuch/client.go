@@ -61,7 +61,7 @@ func (c *Client) Search(term string, limit, offset int) ([]Thread, error) {
 
 func (c *Client) Show(term string) ([][]interface{}, error) {
 	var messages [][]interface{}
-	if err := c.jsonExec(&messages, "show", "--include-html", term); err != nil {
+	if err := c.jsonExec(&messages, "show", term); err != nil {
 		return nil, err
 	}
 
