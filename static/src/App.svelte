@@ -22,7 +22,7 @@
     searchTerms,
   } from "./stores/url";
   import mailboxes, { address } from "./stores/mailboxes";
-  import thread, { getFirstMessage, findMessage } from "./stores/thread";
+  import thread, { findMessage, findOtherMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
   import newMessage from "./stores/new_message";
 
@@ -71,7 +71,15 @@
 
   async function loadThread() {
     const res = await thread.fetch($selectedThread);
-    const message = getFirstMessage(res);
+    await tick();
+
+    const messages = messageList.querySelectorAll(`div[data-message]`);
+    if (messages.length === 0) return;
+
+    const messageId = messages[messages.length - 1].dataset.message;
+    const message =
+      findOtherMessage($thread, null, ["unread"]) ||
+      findMessage(res, messageId);
 
     selectedMessage.selectMessage(message.id);
     markAsRead($selectedThread, message);

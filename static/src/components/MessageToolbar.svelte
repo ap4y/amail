@@ -5,7 +5,7 @@
   import url, { selectedMailbox, selectedThread } from "../stores/url";
   import mailboxes from "../stores/mailboxes";
   import threads from "../stores/threads";
-  import thread from "../stores/thread";
+  import thread, { findOtherMessage } from "../stores/thread";
   import selectedMessage from "../stores/message";
   import newMessage from "../stores/new_message";
 
@@ -15,24 +15,6 @@
 
   function markUnread() {
     updateTags($selectedThread, message.id, ["+unread"]);
-  }
-
-  function findOtherMessage(thread, messageId, tags) {
-    if (!thread) return null;
-
-    for (const [message, subThread] of thread) {
-      if (
-        message.id != messageId &&
-        tags.every((tag) => message.tags.includes(tag))
-      ) {
-        return message;
-      }
-
-      const match = findOtherMessage(subThread, messageId, tags);
-      if (match) return match;
-    }
-
-    return null;
   }
 
   function selectNextThread() {

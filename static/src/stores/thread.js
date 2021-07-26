@@ -16,6 +16,24 @@ export function findMessage(thread, messageId) {
   return null;
 }
 
+export function findOtherMessage(thread, messageId, tags) {
+  if (!thread) return null;
+
+  for (const [message, subThread] of thread) {
+    if (
+      message.id != messageId &&
+      tags.every((tag) => message.tags.includes(tag))
+    ) {
+      return message;
+    }
+
+    const match = findOtherMessage(subThread, messageId, tags);
+    if (match) return match;
+  }
+
+  return null;
+}
+
 function getThreadTags(set, thread) {
   for (const [message, subThread] of thread) {
     message.tags.forEach((tag) => set.add(tag));
