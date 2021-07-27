@@ -150,13 +150,24 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attachment, err := s.client.Attachment(string(messageID), partID)
+	attachment, part, err := s.client.Attachment(string(messageID), partID)
 	if err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	http.ServeContent(w, r, "attachment", time.Now(), attachment)
+	cType := part["content-type"].(string)
+	if part["content-charset"] != nil {
+		cType += "; charset=" + part["content-charset"].(string)
+	}
+	w.Header().Set("Content-Type", cType)
+
+	filename := "attachment"
+	if part["filename"] != nil {
+		filename = part["filename"].(string)
+	}
+
+	http.ServeContent(w, r, filename, time.Now(), attachment)
 }
 
 func (s *Server) messageReplyHandler(w http.ResponseWriter, r *http.Request) {

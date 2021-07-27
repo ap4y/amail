@@ -68,13 +68,20 @@ func (c *Client) Show(term string) ([][]interface{}, error) {
 	return messages, nil
 }
 
-func (c *Client) Attachment(messageID, partID string) (io.ReadSeeker, error) {
-	res, err := c.exec("show", nil, "--part", partID, "id:"+messageID)
-	if err != nil {
-		return nil, err
+func (c *Client) Attachment(messageID, partID string) (io.ReadSeeker, map[string]interface{}, error) {
+	args := []string{"--part", partID, "id:" + messageID}
+
+	var part map[string]interface{}
+	if err := c.jsonExec(&part, "show", args...); err != nil {
+		return nil, nil, err
 	}
 
-	return bytes.NewReader(res), nil
+	res, err := c.exec("show", nil, args...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return bytes.NewReader(res), part, nil
 }
 
 func (c *Client) Count(term string, output CountOutputType) (int, error) {
