@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-import { traverseContent, quotedText } from "../lib/email";
+import { quotedText } from "../lib/email";
 
 const { subscribe, set, update } = writable(null);
 
@@ -12,10 +12,7 @@ function reply(reply) {
   const { To, Cc, Subject, ...rest } = reply["reply-headers"];
   const { headers, body } = reply.original;
 
-  const content = body.map((item) =>
-    quotedText(traverseContent(item).text.join("\n"))
-  );
-
+  const content = body.map((item) => quotedText(item)).join("\n");
   set({
     to: To.split(", "),
     cc: Cc?.split(", ") || [],
@@ -23,7 +20,7 @@ function reply(reply) {
     headers: { ...rest },
     body: `
 On ${headers.Date}, ${headers.From} wrote:
-${content.join("\n")}`,
+${content}`,
   });
 }
 

@@ -1,25 +1,13 @@
-export function traverseContent(
-  item,
-  acc = { text: [], html: [], attach: [] }
-) {
-  if (item["content-type"].startsWith("multipart")) {
-    item.content.forEach((child) => traverseContent(child, acc));
-  } else if (item["content-type"] === "text/plain") {
-    acc.text.push(item.content);
-  } else if (item["content-type"] === "text/html") {
-    acc.html.push(item);
-  } else if (item["content-disposition"] === "attachment") {
-    acc.attach.push(item);
-  }
-
-  return acc;
-}
-
-export function quotedText(text) {
+export function quotedText(body) {
+  const { text } = parseMessageBody(body);
   return text
-    .split()
-    .map((line) => `> ${line}`)
-    .join();
+    .map(({ content, type }) => {
+      return content
+        .split("\n")
+        .map((line) => (type === "text" ? `> ${line}\n` : `> > ${line}\n`))
+        .join("");
+    })
+    .join("");
 }
 
 export function parseMessageBody(
