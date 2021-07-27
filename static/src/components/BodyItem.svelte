@@ -1,6 +1,7 @@
 <script>
-  import { traverseContent, parseMessageBody } from "../lib/email";
+  import { parseMessageBody } from "../lib/email";
   import { linkify } from "../lib/linkify";
+  import DeepquoteBlock from "./DeepquoteBlock.svelte";
 
   export let body;
   export let messageId;
@@ -20,12 +21,7 @@
         {block.content}
       </p>
     {:else if block.type === "deepquote"}
-      <p
-        style={`width: ${wrap}ch;`}
-        class="whitespace-pre-line break-words text-gray-600 border-l-8 border-gray-400 pl-3"
-      >
-        {block.content}
-      </p>
+      <DeepquoteBlock content={block.content} />
     {:else}
       <p style={`width: ${wrap}ch;`} class="whitespace-pre-line break-words">
         {#each linkify(block.content) as text}
