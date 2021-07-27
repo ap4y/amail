@@ -1,5 +1,5 @@
 <script>
-  import { updateTags, updateThreadTags } from "../lib/tagging";
+  import { updateTags, updateThreadTags, tagChanges } from "../lib/tagging";
 
   import ApiClient from "../client";
   import url, { selectedMailbox, selectedThread } from "../stores/url";
@@ -27,21 +27,8 @@
     }
   }
 
-  function tagChanges(fromMailbox, toMailbox) {
-    const fromTags = $mailboxes.find(({ id }) => id === fromMailbox).tags;
-    const toTags = $mailboxes.find(({ id }) => id === toMailbox).tags;
-
-    const changes = [];
-    $mailboxes.forEach(({ tags }) =>
-      tags.forEach((tag) => !toTags.includes(tag) && changes.push(`-${tag}`))
-    );
-    toTags.forEach((tag) => changes.push(`+${tag}`));
-
-    return { changes, fromTags, toTags };
-  }
-
   function move(folder) {
-    const { changes, fromTags } = tagChanges($selectedMailbox, folder);
+    const { changes, fromTags } = tagChanges($mailboxes, $selectedMailbox, folder);
     updateTags($selectedThread, message.id, changes);
 
     const other = findOtherMessage($thread, message.id, fromTags);
@@ -53,7 +40,7 @@
   }
 
   async function deleteThread() {
-    const { changes } = tagChanges($selectedMailbox, "trash");
+    const { changes } = tagChanges($mailboxes, $selectedMailbox, "trash");
     await updateThreadTags($selectedThread, [...changes, "-unread"]);
     selectNextThread();
   }
@@ -88,11 +75,14 @@
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
+      enable-background="new 0 0 24 24"
       viewBox="0 0 24 24"
       class="fill-current w-full"
-      ><path d="M0 0h24v24H0V0z" fill="none" /><path
-        d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"
-      /></svg
+      ><g><rect fill="none" height="24" width="24" /></g><g
+        ><path
+          d="M20,2H4C3,2,2,2.9,2,4v3.01C2,7.73,2.43,8.35,3,8.7V20c0,1.1,1.1,2,2,2h14c0.9,0,2-0.9,2-2V8.7c0.57-0.35,1-0.97,1-1.69V4 C22,2.9,21,2,20,2z M15,14H9v-2h6V14z M20,7H4V4h16V7z"
+        /></g
+      ></svg
     >
   </ToolbarButton>
   <ToolbarButton

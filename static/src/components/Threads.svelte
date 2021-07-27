@@ -1,6 +1,9 @@
 <script>
   import url, { selectedMailbox, selectedThread } from "../stores/url";
   import threads, { currentPage } from "../stores/threads";
+  import selectedThreads from "../stores/selected_threads";
+
+  import Checkbox from "./Checkbox.svelte";
 
   export let mailbox;
 
@@ -23,6 +26,11 @@
     on:click|preventDefault={() =>
       url.selectThread($selectedMailbox, thread.thread)}
   >
+    <Checkbox
+      class="ml-3"
+      checked={$selectedThreads.includes(thread.thread)}
+      on:click={() => selectedThreads.toggle(thread)}
+    />
     <span class="px-3 w-28">{thread.date_relative}</span>
     <span class="pr-6 w-40 truncate">{thread.authors}</span>
     <span

@@ -37,3 +37,16 @@ export async function markAsRead(threadId, message) {
 
   return await updateTags(threadId, message.id, ["-unread"]);
 }
+
+export function tagChanges(mailboxes, fromMailbox, toMailbox) {
+  const fromTags = mailboxes.find(({ id }) => id === fromMailbox).tags;
+  const toTags = mailboxes.find(({ id }) => id === toMailbox).tags;
+
+  const changes = [];
+  mailboxes.forEach(({ tags }) =>
+    tags.forEach((tag) => !toTags.includes(tag) && changes.push(`-${tag}`))
+  );
+  toTags.forEach((tag) => changes.push(`+${tag}`));
+
+  return { changes, fromTags, toTags };
+}

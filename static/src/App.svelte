@@ -7,6 +7,7 @@
   import MenuButton from "./components/MenuButton.svelte";
   import Mailboxes from "./components/Mailboxes.svelte";
   import SearchField from "./components/SearchField.svelte";
+  import ThreadToolbar from "./components/ThreadToolbar.svelte";
   import ThreadPages from "./components/ThreadPages.svelte";
   import Threads from "./components/Threads.svelte";
   import Thread from "./components/Thread.svelte";
@@ -25,6 +26,7 @@
   import thread, { findMessage, findOtherMessage } from "./stores/thread";
   import selectedMessage from "./stores/message";
   import newMessage from "./stores/new_message";
+  import selectedThreads from "./stores/selected_threads";
 
   let refreshing = false;
   let threadList, messageList;
@@ -155,9 +157,10 @@
     style={`width: calc(100% - ${sidebarCollapsed ? 4 : 14}rem)`}
   >
     <header
-      class="h-14 flex-shrink-0 flex flex-row items-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
+      class="h-14 flex-shrink-0 flex flex-row items-center justify-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
     >
       <SearchField />
+      <ThreadToolbar disabled={$selectedThreads.length === 0} />
       <ThreadPages />
     </header>
 
