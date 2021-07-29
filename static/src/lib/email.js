@@ -1,12 +1,16 @@
+function getTextContent(body, text = []) {
+  if (body["content-type"].startsWith("multipart")) {
+    body.content.forEach((child) => getTextContent(child, text));
+  } else if (body["content-type"] === "text/plain") {
+    text.push(body.content);
+  }
+
+  return text;
+}
+
 export function quotedText(body) {
-  const { text } = parseMessageBody(body);
-  return text
-    .map(({ content, type }) => {
-      return content
-        .split("\n")
-        .map((line) => (type === "text" ? `> ${line}\n` : `> > ${line}\n`))
-        .join("");
-    })
+  return getTextContent(body)
+    .map((content) => content.replace(/^/gm, "> "))
     .join("");
 }
 

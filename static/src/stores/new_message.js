@@ -18,9 +18,9 @@ function reply(reply) {
     cc: Cc?.split(", ") || [],
     subject: Subject,
     headers: { ...rest },
-    body: `
-On ${headers.Date}, ${headers.From} wrote:
-${content}`,
+    body: content,
+    originalHeaders: headers,
+    reply: true,
   });
 }
 

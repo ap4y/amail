@@ -1,6 +1,7 @@
 <script>
   import { parseMessageBody } from "../lib/email";
   import { linkify } from "../lib/linkify";
+
   import DeepquoteBlock from "./DeepquoteBlock.svelte";
 
   export let body;

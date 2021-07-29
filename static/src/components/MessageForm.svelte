@@ -4,6 +4,8 @@
   import { address } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
 
+  import TextEditor from "./TextEditor.svelte";
+
   const dispatch = createEventDispatcher();
   let submiting = false;
   let error = null;
@@ -19,6 +21,30 @@
       error = e.message;
       submiting = false;
     }
+  }
+
+  let blocks = [{ type: "text", content: "" }];
+  if ($newMessage?.reply) {
+    const { Date, From } = $newMessage?.originalHeaders;
+    blocks.push(
+      { type: "text", content: `On ${Date}, ${From} wrote:` },
+      { type: "quote", content: $newMessage?.body }
+    );
+  }
+
+  function onInput({ target }) {
+    const newBlocks = [];
+    for (const el of target.querySelectorAll("p")) {
+      const content = el.textContent;
+      newBlocks.push({
+        type: el.dataset.type,
+        content: content + (content.endsWith("\n") ? "" : "\n"),
+      });
+    }
+    blocks = newBlocks;
+    newMessage.setField({
+      body: blocks.map(({ content }) => content).join(""),
+    });
   }
 </script>
 
@@ -89,14 +115,7 @@
   </div>
 
   <div class="p-3">
-    <textarea
-      style="width: 85ch;"
-      class="border rounded p-3 outline-none border-gray-400 hover:border-gray-500 focus:border-red-300"
-      placeholder="Type in message body"
-      rows="10"
-      value={$newMessage?.body}
-      on:change={({ target }) => newMessage.setField({ body: target.value })}
-    />
+    <TextEditor {blocks} on:input={(e) => onInput(e)} />
   </div>
 
   <div class="px-3 mb-3 flex flex-row justify-end items-center">
