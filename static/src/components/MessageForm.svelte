@@ -4,6 +4,7 @@
   import { address } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
 
+  import AddressField from "./AddressField.svelte";
   import TextEditor from "./TextEditor.svelte";
 
   const dispatch = createEventDispatcher();
@@ -50,6 +51,7 @@
 
 <div
   class="absolute bottom-5 right-5 bg-white shadow rounded border-2 border-gray-500"
+  style="max-width: calc(85ch + 2rem)"
 >
   <div
     class="px-3 py-2 flex flex-row items-center justify-between bg-gray-500 text-white"
@@ -78,26 +80,20 @@
     </div>
 
     <div class="flex flex-row items-center mb-2">
-      <label class="w-20" for="to">To: </label>
-      <input
-        type="text"
+      <label class="w-20 flex-shrink-0" for="to">To: </label>
+      <AddressField
         id="to"
-        class="w-full outline-none px-3 py-1 bg-white text-gray-700 rounded border border-gray-400 hover:border-gray-500 focus:border-red-300"
-        value={$newMessage?.to?.join(" ")}
-        on:change={({ target }) =>
-          newMessage.setField({ to: target.value.split(" ") })}
+        value={$newMessage?.to}
+        on:change={({ detail }) => newMessage.setField({ to: detail })}
       />
     </div>
 
     <div class="flex flex-row items-center mb-2">
-      <label class="w-20" for="cc">CC: </label>
-      <input
-        type="text"
+      <label class="w-20 flex-shrink-0" for="cc">CC: </label>
+      <AddressField
         id="cc"
-        class="w-full outline-none px-3 py-1 bg-white text-gray-700 rounded border border-gray-400 hover:border-gray-500 focus:border-red-300"
-        value={$newMessage?.cc?.join(" ")}
-        on:change={({ target }) =>
-          newMessage.setField({ cc: target.value.split(" ") })}
+        value={$newMessage?.cc}
+        on:change={({ detail }) => newMessage.setField({ cc: detail })}
       />
     </div>
 
@@ -106,7 +102,7 @@
       <input
         type="text"
         id="subject"
-        class="w-full outline-none px-3 py-1 bg-white text-gray-700 rounded border border-gray-400 hover:border-gray-500 focus:border-red-300"
+        class="flex-1 outline-none px-3 py-1 bg-white text-gray-700 rounded border border-gray-400 hover:border-gray-500 focus:border-red-300"
         value={$newMessage?.subject}
         on:change={({ target }) =>
           newMessage.setField({ subject: target.value })}
