@@ -25,7 +25,6 @@ var conf = config.Config{
 	},
 	TagRules: map[string]string{
 		"+personal":               "to:mail@ap4y.me or to:ap4y@me.com",
-		"+sent -inbox":            "from:mail@ap4y.me and not tag:draft and not tag:trash",
 		"+openbsd +list":          "to:tech@openbsd.org",
 		"+archive -unread -inbox": "folder:Archive",
 		"+sent -unread -inbox":    "folder:Sent",

@@ -247,7 +247,7 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := s.client.Insert(mbox.Folder, &buf); err != nil {
+		if err := s.client.Insert(mbox.Folder, &buf, "+sent", "-inbox", "-unread"); err != nil {
 			sendError(w, r, err, http.StatusBadRequest)
 			return
 		}
