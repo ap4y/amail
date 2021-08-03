@@ -40,8 +40,29 @@ class ApiClient {
     return this.request("PUT", "/tags", { terms, tags });
   }
 
-  sendMessage(message) {
-    return this.request("POST", "/messages", message);
+  async sendMessage(message) {
+    const formData = new FormData();
+    message.to.forEach((addr) => formData.append("to[]", addr));
+    message.cc.forEach((addr) => formData.append("cc[]", addr));
+    formData.append("subject", message.subject);
+    formData.append("body", message.body);
+    Object.keys(message.headers).forEach((key) =>
+      formData.append(`headers[${key}]`, message.headers[key])
+    );
+    message.attachments.forEach((file) =>
+      formData.append("attachments[]", file, file.name)
+    );
+
+    const res = await fetch(`${this.baseURL}/messages`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (res.ok) {
+      return null;
+    }
+
+    throw new ApiError(res.status, res.statusText);
   }
 
   replyToMessage(messageId, replyTo) {

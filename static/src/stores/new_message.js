@@ -5,7 +5,7 @@ import { quotedText } from "../lib/email";
 const { subscribe, set, update } = writable(null);
 
 function create(from) {
-  set({ to: [], cc: [], subject: "", body: "" });
+  set({ to: [], cc: [], subject: "", body: "", headers: {}, attachments: [] });
 }
 
 function reply(reply) {
@@ -21,6 +21,7 @@ function reply(reply) {
     body: content,
     originalHeaders: headers,
     reply: true,
+    attachments: [],
   });
 }
 

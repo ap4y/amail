@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"ap4y.me/cloud-mail/config"
@@ -219,11 +221,19 @@ func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
-	var msg *smtp.Message
-
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+	if err := r.ParseMultipartForm(1024 * 1024); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 		return
+	}
+
+	form := r.MultipartForm
+	msg := &smtp.Message{
+		To:          form.Value["to[]"],
+		CC:          form.Value["cc[]"],
+		Body:        r.FormValue("body"),
+		Subject:     r.FormValue("subject"),
+		Attachments: form.File["attachments[]"],
+		Headers:     formMap(form, "headers"),
 	}
 
 	m, err := s.smtpClient.Send(msg)
@@ -261,4 +271,19 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {
 	logger.Info().Err(err).Msgf("%s %s: %d", r.Method, r.URL.Path, http.StatusBadRequest)
 	http.Error(w, err.Error(), http.StatusBadRequest)
+}
+
+func formMap(form *multipart.Form, fKey string) map[string]string {
+	headers := map[string]string{}
+
+	for key, val := range form.Value {
+		if strings.HasPrefix(key, fKey+"[") {
+			headerKey := strings.ReplaceAll(
+				strings.ReplaceAll(key, fKey+"[", ""), "]", "",
+			)
+			headers[headerKey] = val[0]
+		}
+	}
+
+	return headers
 }

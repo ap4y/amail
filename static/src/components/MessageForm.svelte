@@ -10,6 +10,7 @@
   const dispatch = createEventDispatcher();
   let submiting = false;
   let error = null;
+  let fileInput;
 
   async function submitMessage() {
     error = null;
@@ -45,6 +46,28 @@
     blocks = newBlocks;
     newMessage.setField({
       body: blocks.map(({ content }) => content).join(""),
+    });
+  }
+
+  function formatSize(size) {
+    if (size > 1000000) {
+      return `${(size / 1000000).toFixed(2)}MB`;
+    } else if (size > 1000) {
+      return `${(size / 1000).toFixed(2)}KB`;
+    } else {
+      return `${size}B`;
+    }
+  }
+
+  function attachFile() {
+    for (const file of fileInput.files) {
+      newMessage.setField({ attachments: [...$newMessage.attachments, file] });
+    }
+  }
+
+  function removeAttachment(index) {
+    newMessage.setField({
+      attachments: $newMessage.attachments.filter((_, idx) => idx !== index),
     });
   }
 </script>
@@ -114,26 +137,63 @@
     <TextEditor {blocks} on:input={(e) => onInput(e)} />
   </div>
 
-  <div class="px-3 mb-3 flex flex-row justify-end items-center">
-    <button
-      class="h-10 p-2 mr-3 rounded hover:border-gray-500 bg-white text-gray-700 active:bg-gray-300 focus:outline-none border"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        class="h-full fill-current"
-        ><path d="M0 0h24v24H0z" fill="none" /><path
-          d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-        /></svg
+  <div class="px-3 mb-3 flex flex-row justify-between items-center">
+    <div class="flex flex-row flex-wrap">
+      <input
+        multiple
+        type="file"
+        class="hidden"
+        bind:this={fileInput}
+        on:change={attachFile}
+      />
+      <button
+        class="h-10 p-2 mr-3 mb-1 rounded hover:border-red-500 bg-white text-gray-700 active:bg-red-300 focus:outline-none border"
+        on:click={() => fileInput.click()}
       >
-    </button>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="h-5 fill-current"
+          ><path d="M0 0h24v24H0z" fill="none" /><path
+            d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"
+          /></svg
+        >
+      </button>
 
-    <button
-      class="bg-red-500 hover:bg-red-600 active:bg-red-700 focus:outline-none px-3 text-white h-10 rounded border-0 font-semibold"
-      disabled={submiting}
-      on:click={() => submitMessage()}
-    >
-      Send
-    </button>
+      {#if $newMessage?.attachments}
+        {#each $newMessage.attachments as attach, idx}
+          <button
+            class="h-10 border border-gray-600 p-2 mr-1 mb-1 rounded text-gray-600 text-sm hover:border-red-500 active:bg-red-300 focus:outline-none"
+            on:click={() => removeAttachment(idx)}
+            ><strong class="mr-1">{attach.name}</strong> ({formatSize(
+              attach.size
+            )})</button
+          >
+        {/each}
+      {/if}
+    </div>
+
+    <div class="flex flex-row">
+      <button
+        class="h-10 p-2 mr-3 rounded hover:border-red-500 bg-white text-gray-700 active:bg-red-300 focus:outline-none border"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          class="h-5 fill-current"
+          ><path d="M0 0h24v24H0z" fill="none" /><path
+            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+          /></svg
+        >
+      </button>
+
+      <button
+        class="bg-red-500 hover:bg-red-600 active:bg-red-700 focus:outline-none px-3 text-white h-10 rounded border-0 font-semibold"
+        disabled={submiting}
+        on:click={() => submitMessage()}
+      >
+        Send
+      </button>
+    </div>
   </div>
 </div>

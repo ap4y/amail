@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"strings"
 
 	"ap4y.me/cloud-mail/config"
@@ -29,11 +31,12 @@ type Authenticator interface {
 type Headers map[string]string
 
 type Message struct {
-	To      []string `json:"to"`
-	CC      []string `json:"cc"`
-	Headers Headers  `json:"headers"`
-	Subject string   `json:"subject"`
-	Body    string   `json:"body"`
+	To          []string                `json:"to"`
+	CC          []string                `json:"cc"`
+	Headers     Headers                 `json:"headers"`
+	Subject     string                  `json:"subject"`
+	Body        string                  `json:"body"`
+	Attachments []*multipart.FileHeader `json:"-"`
 }
 
 type Client struct {
@@ -64,6 +67,18 @@ func (c *Client) Send(msg *Message) (*gomail.Message, error) {
 		for key, val := range msg.Headers {
 			m.SetHeader(key, val)
 		}
+	}
+
+	for _, attach := range msg.Attachments {
+		m.Attach(attach.Filename, gomail.SetCopyFunc(func(w io.Writer) error {
+			f, err := attach.Open()
+			if err != nil {
+				return err
+			}
+
+			_, err = io.Copy(w, f)
+			return err
+		}))
 	}
 
 	m.SetHeader("Message-ID", c.generateMessageId())
