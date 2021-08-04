@@ -28,7 +28,11 @@
   }
 
   function move(folder) {
-    const { changes, fromTags } = tagChanges($mailboxes, $selectedMailbox, folder);
+    const { changes, fromTags } = tagChanges(
+      $mailboxes,
+      $selectedMailbox,
+      folder
+    );
     updateTags($selectedThread, message.id, changes);
 
     const other = findOtherMessage($thread, message.id, fromTags);
@@ -49,13 +53,17 @@
     const reply = await ApiClient.default.replyToMessage(message.id, replyTo);
     newMessage.reply(reply);
   }
+
+  async function forward() {
+    newMessage.forward(message);
+  }
 </script>
 
 <ToolbarButton
   tooltip="Mark as unread"
   tooltipPosition="left"
   class="mr-3"
-  on:click={() => markUnread()}
+  on:click={markUnread}
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -140,11 +148,7 @@
   >
 </ToolbarButton>
 
-<ToolbarButton
-  tooltip="Delete thread"
-  class="mr-3"
-  on:click={() => deleteThread()}
->
+<ToolbarButton tooltip="Delete thread" class="mr-3" on:click={deleteThread}>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -176,7 +180,7 @@
       /></svg
     >
   </ToolbarButton>
-  <ToolbarButton tooltip="Forward" tooltipPosition="right">
+  <ToolbarButton tooltip="Forward" tooltipPosition="right" on:click={forward}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"

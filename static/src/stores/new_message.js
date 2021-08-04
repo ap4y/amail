@@ -4,7 +4,7 @@ import { quotedText } from "../lib/email";
 
 const { subscribe, set, update } = writable(null);
 
-function create(from) {
+function create() {
   set({ to: [], cc: [], subject: "", body: "", headers: {}, attachments: [] });
 }
 
@@ -25,6 +25,20 @@ function reply(reply) {
   });
 }
 
+function forward({ body, headers }) {
+  const content = body.map((item) => quotedText(item)).join("\n");
+  set({
+    to: [],
+    cc: [],
+    subject: `Fwd: ${headers.Subject}`,
+    headers: {},
+    body: content,
+    originalHeaders: headers,
+    reply: true,
+    attachments: [],
+  });
+}
+
 function setField(updates) {
   update((message) => ({ ...message, ...updates }));
 }
@@ -37,4 +51,12 @@ function destroy() {
   set(null);
 }
 
-export default { subscribe, create, reply, setField, set: setBody, destroy };
+export default {
+  subscribe,
+  create,
+  reply,
+  forward,
+  setField,
+  set: setBody,
+  destroy,
+};
