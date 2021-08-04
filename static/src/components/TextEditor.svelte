@@ -27,13 +27,28 @@
     node.insertAdjacentHTML("afterend", otherQuote);
     window.getSelection().collapse(node.nextSibling.nextSibling);
   }
+
+  function input({ target }) {
+    const newBlocks = [];
+    for (const el of target.querySelectorAll("p")) {
+      const content =
+        el.dataset.type === "quote"
+          ? el.textContent.replace(/^/gm, "> ")
+          : el.textContent;
+      newBlocks.push({
+        type: el.dataset.type,
+        content: content + (content.endsWith("\n") ? "" : "\n"),
+      });
+    }
+    dispatch("input", newBlocks);
+  }
 </script>
 
 <div
   contenteditable="true"
   style="width: 85ch;"
   class="h-80 border rounded p-3 outline-none border-gray-400 hover:border-gray-500 focus:border-red-300 overflow-y-auto"
-  on:input
+  on:input={input}
   on:beforeinput={beforeInput}
 >
   {#each content as block}

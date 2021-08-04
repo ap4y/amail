@@ -34,16 +34,8 @@
     );
   }
 
-  function onInput({ target }) {
-    const newBlocks = [];
-    for (const el of target.querySelectorAll("p")) {
-      const content = el.textContent;
-      newBlocks.push({
-        type: el.dataset.type,
-        content: content + (content.endsWith("\n") ? "" : "\n"),
-      });
-    }
-    blocks = newBlocks;
+  function onInput({ detail }) {
+    blocks = detail;
     newMessage.setField({
       body: blocks.map(({ content }) => content).join(""),
     });
