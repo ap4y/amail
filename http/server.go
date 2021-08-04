@@ -30,17 +30,18 @@ type Server struct {
 	client     *notmuch.Client
 	smtpClient *smtp.Client
 
+	name      string
 	addresses []string
 	mailboxes []config.Mailbox
 }
 
-func NewServer(addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.Client) (*Server, error) {
+func NewServer(name string, addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.Client) (*Server, error) {
 	c, err := notmuch.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
-	s := &Server{client: c, smtpClient: smtpClient, addresses: addresses, mailboxes: mailboxes}
+	s := &Server{client: c, smtpClient: smtpClient, name: name, addresses: addresses, mailboxes: mailboxes}
 
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
@@ -79,7 +80,7 @@ func NewServer(addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.
 }
 
 func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
-	data := AccountData{s.addresses[0], make([]MailboxStats, len(s.mailboxes))}
+	data := AccountData{s.addresses[0], s.name, make([]MailboxStats, len(s.mailboxes))}
 
 	for idx, mailbox := range s.mailboxes {
 		unread, err := s.client.Count(mailbox.Terms+" and tag:unread", notmuch.CountOutputMessages)

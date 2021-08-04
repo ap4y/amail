@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher } from "svelte";
   import ApiClient from "../client";
-  import { address } from "../stores/mailboxes";
+  import { address, name } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
 
   import AddressField from "./AddressField.svelte";
@@ -91,7 +91,10 @@
   <div class="p-3 bg-gray-100 text-gray-500">
     <div class="flex flex-row items-center mb-2">
       <label class="w-20" for="from">From: </label>
-      <span class="font-semibold text-gray-600">{$address}</span>
+      <span class="text-gray-600">
+        <strong class="font-semibold ">{$name}</strong>
+        &lt;{$address}&gt;
+      </span>
     </div>
 
     <div class="flex flex-row items-center mb-2">

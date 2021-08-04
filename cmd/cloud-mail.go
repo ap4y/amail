@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var conf = config.Config{
+	Name:      "Arthur Evsifeev",
 	Addresses: []string{"mail@ap4y.me", "ap4y@me.com", "arthur.evstifeev@gmail.com"},
 	Mailboxes: []config.Mailbox{
 		{"inbox", "INBOX", "tag:personal and tag:inbox", []string{"inbox"}},
@@ -68,11 +70,13 @@ func main() {
 		log.Fatal().Msg("Specify at least one address")
 	}
 
-	client := smtp.New(conf.Addresses[0], conf.Submission, auth(func(username, hostname string) (string, error) {
-		return "crews96/gust", nil
-	}))
+	client := smtp.New(fmt.Sprintf("%s <%s>", conf.Name, conf.Addresses[0]),
+		conf.Submission,
+		auth(func(username, hostname string) (string, error) {
+			return "crews96/gust", nil
+		}))
 
-	s, err := http.NewServer(conf.Addresses, conf.Mailboxes, client)
+	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client)
 	if err != nil {
 		log.Fatal().Msgf("Error creating an http server: %s", err)
 	}

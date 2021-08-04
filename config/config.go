@@ -3,6 +3,7 @@ package config
 import "time"
 
 type Config struct {
+	Name            string
 	Addresses       []string
 	Mailboxes       []Mailbox
 	TagRules        map[string]string

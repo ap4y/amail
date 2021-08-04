@@ -7,6 +7,7 @@ import (
 
 type AccountData struct {
 	Address   string         `json:"address"`
+	Name      string         `json:"name"`
 	Mailboxes []MailboxStats `json:"mailboxes"`
 }
 
