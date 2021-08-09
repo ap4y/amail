@@ -14,18 +14,22 @@
     const node = startContainer.parentNode;
 
     if (node.dataset.type !== "quote") return;
-    e.preventDefault();
 
-    if (e.inputType !== "insertParagraph") return;
-
-    node.innerHTML = startContainer.wholeText.slice(0, startOffset);
-    const otherQuote = `
+    if (e.inputType === "insertParagraph") {
+      e.preventDefault();
+      node.innerHTML = startContainer.wholeText.slice(0, startOffset);
+      const otherQuote = `
 <p class="whitespace-pre-wrap break-words" data-type="text">\n</p>
 <p class="whitespace-pre-wrap break-words text-gray-600 border-l-8 border-gray-400 pl-3" data-type="quote">${startContainer.wholeText.slice(
-      startOffset + 1
-    )}</p>`;
-    node.insertAdjacentHTML("afterend", otherQuote);
-    window.getSelection().collapse(node.nextSibling.nextSibling);
+        startOffset + 1
+      )}</p>`;
+      node.insertAdjacentHTML("afterend", otherQuote);
+      window.getSelection().collapse(node.nextSibling.nextSibling);
+    } else {
+      if (!e.inputType.startsWith("deleteContent")) {
+        e.preventDefault();
+      }
+    }
   }
 
   function input({ target }) {
