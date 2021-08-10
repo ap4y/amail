@@ -7,7 +7,8 @@
   export let level = 0;
 
   function hiddenMessage({ tags }) {
-    return tags.includes("draft") || tags.includes("trash");
+    /* return tags.includes("draft") || tags.includes("trash"); */
+    return false;
   }
 </script>
 
