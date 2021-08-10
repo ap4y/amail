@@ -23,7 +23,11 @@
     searchTerms,
   } from "./stores/url";
   import mailboxes, { address } from "./stores/mailboxes";
-  import thread, { findMessage, findOtherMessage } from "./stores/thread";
+  import thread, {
+    findMessage,
+    findOtherMessage,
+    findLastMessage,
+  } from "./stores/thread";
   import selectedMessage from "./stores/message";
   import newMessage from "./stores/new_message";
   import selectedThreads from "./stores/selected_threads";
@@ -81,6 +85,7 @@
     const messageId = messages[messages.length - 1].dataset.message;
     const message =
       findOtherMessage($thread, null, ["unread"]) ||
+      findLastMessage($thread, null, [], ["trash"]) ||
       findMessage(res, messageId);
 
     selectedMessage.selectMessage(message.id);

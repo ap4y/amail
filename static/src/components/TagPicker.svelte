@@ -46,7 +46,7 @@
   <div class="flex flex-row flex-wrap">
     {#each tags as tag}
       <div
-        class="inline-flex text-gray-600 text-sm mr-2 max-w-xs truncate cursor-pointer hover:text-red-500"
+        class="inline-flex text-gray-600 text-sm mr-2 mb-2 max-w-xs truncate cursor-pointer hover:text-red-500"
         on:click={() => dispatch("remove", tag)}
       >
         <svg

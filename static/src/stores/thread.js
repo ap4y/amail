@@ -16,22 +16,52 @@ export function findMessage(thread, messageId) {
   return null;
 }
 
-export function findOtherMessage(thread, messageId, tags) {
+export function findOtherMessage(thread, messageId, withTags, withoutTags) {
   if (!thread) return null;
 
   for (const [message, subThread] of thread) {
     if (
       message.id != messageId &&
-      tags.every((tag) => message.tags.includes(tag))
+      withTags.every((tag) => message.tags.includes(tag)) &&
+      withoutTags.every((tag) => !message.tags.includes(tag))
     ) {
       return message;
     }
 
-    const match = findOtherMessage(subThread, messageId, tags);
+    const match = findOtherMessage(subThread, messageId, withTags, withoutTags);
     if (match) return match;
   }
 
   return null;
+}
+
+export function findLastMessage(thread, messageId, withTags, withoutTags) {
+  const messages = matchedMessages(
+    thread,
+    messageId,
+    withTags,
+    withoutTags
+  ).sort((a, b) => b.timestamp - a.timestamp);
+
+  return messages.length > 0 ? messages[0] : null;
+}
+
+function matchedMessages(thread, messageId, withTags, withoutTags, acc = []) {
+  if (!thread) return acc;
+
+  for (const [message, subThread] of thread) {
+    if (
+      message.id != messageId &&
+      withTags.every((tag) => message.tags.includes(tag)) &&
+      withoutTags.every((tag) => !message.tags.includes(tag))
+    ) {
+      acc.push(message);
+    }
+
+    matchedMessages(subThread, messageId, withTags, withoutTags, acc);
+  }
+
+  return acc;
 }
 
 function getThreadTags(set, thread) {
