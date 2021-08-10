@@ -54,12 +54,6 @@
     updateTags($selectedThread, message.id, [`-${detail}`]);
   }
 
-  async function deleteThread() {
-    const { changes } = tagChanges($mailboxes, $selectedMailbox, "trash");
-    await updateThreadTags($selectedThread, [...changes, "-unread"]);
-    selectNextThread();
-  }
-
   async function reply(replyTo) {
     const reply = await ApiClient.default.replyToMessage(message.id, replyTo);
     newMessage.reply(reply);
@@ -174,17 +168,6 @@
     />
   {/if}
 </div>
-
-<ToolbarButton tooltip="Delete thread" class="mr-3" on:click={deleteThread}>
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    class="w-full fill-current"
-    ><path d="M0 0h24v24H0z" fill="none" /><path
-      d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z"
-    /></svg
-  >
-</ToolbarButton>
 
 <div class="flex flex-row ml-auto">
   <ToolbarButton tooltip="Reply" class="mr-1" on:click={() => reply("sender")}>
