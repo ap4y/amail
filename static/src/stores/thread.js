@@ -16,7 +16,12 @@ export function findMessage(thread, messageId) {
   return null;
 }
 
-export function findOtherMessage(thread, messageId, withTags, withoutTags) {
+export function findOtherMessage(
+  thread,
+  messageId,
+  withTags = [],
+  withoutTags = []
+) {
   if (!thread) return null;
 
   for (const [message, subThread] of thread) {
@@ -35,7 +40,12 @@ export function findOtherMessage(thread, messageId, withTags, withoutTags) {
   return null;
 }
 
-export function findLastMessage(thread, messageId, withTags, withoutTags) {
+export function findLastMessage(
+  thread,
+  messageId,
+  withTags = [],
+  withoutTags = []
+) {
   const messages = matchedMessages(
     thread,
     messageId,

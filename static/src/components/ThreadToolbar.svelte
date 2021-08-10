@@ -4,16 +4,40 @@
   import mailboxes from "../stores/mailboxes";
   import { selectedMailbox } from "../stores/url";
   import selectedThreads from "../stores/selected_threads";
+  import threads from "../stores/threads";
 
   import ToolbarButton from "./ToolbarButton.svelte";
+  import TagPicker from "./TagPicker.svelte";
 
   export let disabled = false;
+  let showTagPicker = false;
+
+  $: tags = [
+    ...$threads
+      .filter(({ thread }) => $selectedThreads.includes(thread))
+      .reduce((acc, { tags }) => {
+        tags.forEach((tag) => acc.add(tag));
+        return acc;
+      }, new Set()),
+  ].sort((a, b) => a.localeCompare(b));
 
   async function move(folder) {
     for (const thread of $selectedThreads) {
       const { changes } = tagChanges($mailboxes, $selectedMailbox, folder);
       await updateThreadTags(thread, [...changes, "-unread"]);
       selectedThreads.toggle({ thread });
+    }
+  }
+
+  async function addTag({ detail }) {
+    for (const thread of $selectedThreads) {
+      await updateThreadTags(thread, [`+${detail}`]);
+    }
+  }
+
+  async function removeTag({ detail }) {
+    for (const thread of $selectedThreads) {
+      await updateThreadTags(thread, [`-${detail}`]);
     }
   }
 </script>
@@ -72,14 +96,31 @@
     >
   </ToolbarButton>
 
-  <ToolbarButton variant="toolbar" tooltip="Tag" {disabled}>
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      class="h-full fill-current"
-      ><path d="M0 0h24v24H0z" fill="none" /><path
-        d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"
-      /></svg
+  <div>
+    <ToolbarButton
+      variant="toolbar"
+      tooltip="Tag"
+      {disabled}
+      on:click={() => (showTagPicker = true)}
     >
-  </ToolbarButton>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        class="h-full fill-current"
+        ><path d="M0 0h24v24H0z" fill="none" /><path
+          d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"
+        /></svg
+      >
+    </ToolbarButton>
+
+    {#if showTagPicker}
+      <TagPicker
+        class="absolute"
+        {tags}
+        on:add={addTag}
+        on:remove={removeTag}
+        on:close={() => (showTagPicker = false)}
+      />
+    {/if}
+  </div>
 </div>
