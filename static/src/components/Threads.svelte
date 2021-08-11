@@ -4,6 +4,7 @@
   import selectedThreads from "../stores/selected_threads";
 
   import Checkbox from "./Checkbox.svelte";
+  import TagBadge from "./TagBadge.svelte";
 
   export let mailbox;
 
@@ -13,6 +14,12 @@
     return tags.includes("unread")
       ? "bg-gray-50 text-red-500 visited:text-red-500"
       : "bg-gray-100 text-gray-600 visited:text-gray-600";
+  }
+
+  function commonTag(tag) {
+    return ["inbox", "sent", "trash", "archive", "personal", "draft"].includes(
+      tag
+    );
   }
 </script>
 
@@ -40,5 +47,12 @@
     >
       {thread.subject}
     </span>
+    <div class="inline-flex px-3">
+      {#each thread.tags as tag}
+        {#if !commonTag(tag)}
+          <TagBadge class="mr-2" {tag} />
+        {/if}
+      {/each}
+    </div>
   </a>
 {/each}
