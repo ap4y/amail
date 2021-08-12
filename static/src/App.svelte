@@ -38,7 +38,6 @@
 
   onMount(() => {
     setInterval(() => refreshMailboxes(), refreshInterval);
-    refreshMailboxes();
   });
 
   $: console.log(
