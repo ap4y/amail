@@ -3,6 +3,8 @@
   import ApiClient from "../client";
   import { address, name } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
+  import { selectedThread } from "../stores/url";
+  import thread from "../stores/thread";
 
   import AddressField from "./AddressField.svelte";
   import TextEditor from "./TextEditor.svelte";
@@ -19,6 +21,7 @@
       await ApiClient.default.sendMessage($newMessage);
       submiting = false;
       newMessage.destroy();
+      thread.fetch($selectedThread);
     } catch (e) {
       error = e.message;
       submiting = false;
