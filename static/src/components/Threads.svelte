@@ -17,7 +17,7 @@
   }
 
   function commonTag(tag) {
-    return ["inbox", "sent", "trash", "archive", "personal", "draft"].includes(
+    return ["inbox", "sent", "trash", "archive", "personal", "draft", "unread"].includes(
       tag
     );
   }
