@@ -3,18 +3,21 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/http"
 	"ap4y.me/cloud-mail/smtp"
 	"ap4y.me/cloud-mail/tagger"
+	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog"
 )
 
 var conf = config.Config{
 	Name:      "Arthur Evsifeev",
 	Addresses: []string{"mail@ap4y.me", "ap4y@me.com", "arthur.evstifeev@gmail.com"},
+	Maildir:   "/home/ap4y/.mail/ap4y",
 	Mailboxes: []config.Mailbox{
 		{"inbox", "INBOX", "tag:personal and tag:inbox", []string{"inbox"}},
 		{"archive", "Archive", "tag:archive", []string{"archive"}},
@@ -29,7 +32,7 @@ var conf = config.Config{
 		"+personal":               "to:mail@ap4y.me or to:ap4y@me.com",
 		"+openbsd +list":          "to:tech@openbsd.org",
 		"+archive -unread -inbox": "folder:Archive",
-		"+sent -unread -inbox":    "folder:Sent",
+		"+sent -unread -inbox":    "folder:Sent and not tag:trash",
 		"+spam -unread -inbox":    "folder:Junk",
 		"+trash -unread -inbox":   "folder:Trash",
 	},
@@ -41,10 +44,12 @@ var conf = config.Config{
 	},
 }
 
-var logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
+var (
+	logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log    = logger.With().Str("sys", "main").Timestamp().Logger()
+)
 
 func main() {
-	log := logger.With().Str("sys", "main").Timestamp().Logger()
 	tagger.SetLogger(logger.With().Str("sys", "tag").Timestamp().Logger())
 	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
 	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
@@ -57,14 +62,7 @@ func main() {
 		log.Fatal().Msgf("Failed to refresh mailboxes: %s", err)
 	}
 
-	go func() {
-		ticker := time.NewTicker(conf.RefreshInterval)
-		for range ticker.C {
-			if err := t.RefreshMailboxes(); err != nil {
-				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
-			}
-		}
-	}()
+	setupRefresh(t)
 
 	if len(conf.Addresses) == 0 {
 		log.Fatal().Msg("Specify at least one address")
@@ -92,4 +90,39 @@ type auth func(string, string) (string, error)
 
 func (a auth) Password(username, hostname string) (string, error) {
 	return a(username, hostname)
+}
+
+func setupRefresh(t *tagger.Tagger) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal().Msgf("Failed to create FS watcher: %s", err)
+	}
+	defer watcher.Close()
+	for _, mailbox := range conf.Mailboxes {
+		if mailbox.Folder == "" {
+			continue
+		}
+
+		path := filepath.Join(conf.Maildir, mailbox.Folder, "new")
+		if err := watcher.Add(path); err != nil {
+			log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
+		}
+	}
+
+	go func() {
+		for event := range watcher.Events {
+			log.Debug().Msgf("FS event in folder %s, event: %d", event.Name, event.Op)
+			if err := t.RefreshMailboxes(); err != nil {
+				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
+			}
+		}
+	}()
+	go func() {
+		ticker := time.NewTicker(conf.RefreshInterval)
+		for range ticker.C {
+			if err := t.RefreshMailboxes(); err != nil {
+				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
+			}
+		}
+	}()
 }

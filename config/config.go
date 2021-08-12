@@ -5,6 +5,7 @@ import "time"
 type Config struct {
 	Name            string
 	Addresses       []string
+	Maildir         string
 	Mailboxes       []Mailbox
 	TagRules        map[string]string
 	RefreshInterval time.Duration
