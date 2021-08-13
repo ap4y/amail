@@ -43,6 +43,10 @@ var conf = config.Config{
 		Username: "ap4y",
 	},
 	PasswordCommand: "pass ap4y.me/mail",
+	Cleanup: config.Cleanup{
+		Tags:     []string{"trash", "spam"},
+		Interval: 2 * time.Hour,
+	},
 }
 
 var (
@@ -55,7 +59,7 @@ func main() {
 	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
 	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
 
-	t, err := tagger.New(conf.TagRules)
+	t, err := tagger.New(conf.TagRules, conf.Cleanup.Tags)
 	if err != nil {
 		log.Fatal().Msgf("Error creating a tagger: %s", err)
 	}
@@ -64,6 +68,7 @@ func main() {
 	}
 
 	setupRefresh(t)
+	setupCleanup(t)
 
 	if len(conf.Addresses) == 0 {
 		log.Fatal().Msg("Specify at least one address")
@@ -117,6 +122,17 @@ func setupRefresh(t *tagger.Tagger) {
 		for range ticker.C {
 			if err := t.RefreshMailboxes(); err != nil {
 				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
+			}
+		}
+	}()
+}
+
+func setupCleanup(t *tagger.Tagger) {
+	go func() {
+		ticker := time.NewTicker(conf.RefreshInterval)
+		for range ticker.C {
+			if err := t.Cleanup(); err != nil {
+				log.Warn().Err(err).Msg("Failed to cleanup mailboxes")
 			}
 		}
 	}()

@@ -59,6 +59,15 @@ func (c *Client) Search(term string, limit, offset int) ([]Thread, error) {
 	return threads, nil
 }
 
+func (c *Client) SearchFiles(term string) ([]string, error) {
+	var files []string
+	if err := c.jsonExec(&files, "search", "--output=files", term); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
 func (c *Client) Show(term string) ([][]interface{}, error) {
 	var messages [][]interface{}
 	if err := c.jsonExec(&messages, "show", term); err != nil {

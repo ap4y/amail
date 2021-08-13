@@ -18,6 +18,7 @@ type Config struct {
 	RefreshInterval time.Duration
 	Submission      Submission
 	PasswordCommand string
+	Cleanup         Cleanup
 }
 
 func (c *Config) Password(username, hostname string) (string, error) {
@@ -51,4 +52,9 @@ type Submission struct {
 	Port     int
 
 	Username string
+}
+
+type Cleanup struct {
+	Tags     []string
+	Interval time.Duration
 }
