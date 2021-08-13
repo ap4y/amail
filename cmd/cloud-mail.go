@@ -42,6 +42,7 @@ var conf = config.Config{
 		Port:     587,
 		Username: "ap4y",
 	},
+	PasswordCommand: "pass ap4y.me/mail",
 }
 
 var (
@@ -68,11 +69,11 @@ func main() {
 		log.Fatal().Msg("Specify at least one address")
 	}
 
-	client := smtp.New(fmt.Sprintf("%s <%s>", conf.Name, conf.Addresses[0]),
+	client := smtp.New(
+		fmt.Sprintf("%s <%s>", conf.Name, conf.Addresses[0]),
 		conf.Submission,
-		auth(func(username, hostname string) (string, error) {
-			return "crews96/gust", nil
-		}))
+		&conf,
+	)
 
 	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client)
 	if err != nil {
@@ -84,12 +85,6 @@ func main() {
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal().Msgf("Startup error: %s", err)
 	}
-}
-
-type auth func(string, string) (string, error)
-
-func (a auth) Password(username, hostname string) (string, error) {
-	return a(username, hostname)
 }
 
 func setupRefresh(t *tagger.Tagger) {
