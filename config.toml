@@ -1,0 +1,73 @@
+name = "Arthur Evsifeev"
+addresses = ["mail@ap4y.me", "ap4y@me.com", "arthur.evstifeev@gmail.com"]
+maildir = "/home/ap4y/.mail/ap4y"
+
+[submission]
+hostname = "mail.ap4y.me"
+port = 587
+username = "ap4y"
+password_command = "pass ap4y.me/mail"
+
+[refresh]
+watch = ["cur", "new"]
+interval = "1m"
+
+[cleanup]
+tags = ["trash", "spam"]
+interval = "2h"
+
+[tag_rules]
+"+personal" = "to:mail@ap4y.me or to:ap4y@me.com"
+"+openbsd +list" = "to:tech@openbsd.org"
+"+archive -unread -inbox" = "folder:Archive"
+"+sent -unread -inbox" = "folder:Sent and not tag:trash"
+"+spam -unread -inbox" = "folder:Junk"
+"+trash -unread -inbox" = "folder:Trash"
+
+[[mailboxes]]
+id = "inbox"
+folder = "INBOX"
+terms = "tag:personal and tag:inbox"
+toggle_tags = ["inbox"]
+
+[[mailboxes]]
+id = "archive"
+folder = "Archive"
+terms = "tag:archive"
+toggle_tags = ["archive"]
+
+[[mailboxes]]
+id = "sent"
+folder = "Sent"
+terms = "tag:sent"
+toggle_tags = ["sent"]
+
+[[mailboxes]]
+id = "draft"
+folder = "Drafts"
+terms = "tag:draft"
+toggle_tags = ["draft"]
+
+[[mailboxes]]
+id = "spam"
+folder = "Junk"
+terms = "tag:spam"
+toggle_tags = ["spam"]
+
+[[mailboxes]]
+id = "trash"
+folder = "Trash"
+terms = "tag:trash"
+toggle_tags = ["trash"]
+
+[[mailboxes]]
+id = "openbsd"
+folder = ""
+terms = "tag:openbsd and tag:inbox"
+toggle_tags = ["inbox"]
+
+[[mailboxes]]
+id = "unsorted"
+folder = ""
+terms = "not tag:personal and not tag:list and tag:inbox"
+toggle_tags = ["inbox"]

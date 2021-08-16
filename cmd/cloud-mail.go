@@ -14,41 +14,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var conf = config.Config{
-	Name:      "Arthur Evsifeev",
-	Addresses: []string{"mail@ap4y.me", "ap4y@me.com", "arthur.evstifeev@gmail.com"},
-	Maildir:   "/home/ap4y/.mail/ap4y",
-	Mailboxes: []config.Mailbox{
-		{"inbox", "INBOX", "tag:personal and tag:inbox", []string{"inbox"}},
-		{"archive", "Archive", "tag:archive", []string{"archive"}},
-		{"sent", "Sent", "tag:sent", []string{"sent"}},
-		{"draft", "Drafts", "tag:draft", []string{"draft"}},
-		{"spam", "Junk", "tag:spam", []string{"spam"}},
-		{"trash", "Trash", "tag:trash", []string{"trash"}},
-		{"openbsd", "", "tag:openbsd and tag:inbox", []string{"inbox"}},
-		{"unsorted", "", "not tag:personal and not tag:list and tag:inbox", []string{"inbox"}},
-	},
-	TagRules: map[string]string{
-		"+personal":               "to:mail@ap4y.me or to:ap4y@me.com",
-		"+openbsd +list":          "to:tech@openbsd.org",
-		"+archive -unread -inbox": "folder:Archive",
-		"+sent -unread -inbox":    "folder:Sent and not tag:trash",
-		"+spam -unread -inbox":    "folder:Junk",
-		"+trash -unread -inbox":   "folder:Trash",
-	},
-	RefreshInterval: time.Minute,
-	Submission: config.Submission{
-		Hostname: "mail.ap4y.me",
-		Port:     587,
-		Username: "ap4y",
-	},
-	PasswordCommand: "pass ap4y.me/mail",
-	Cleanup: config.Cleanup{
-		Tags:     []string{"trash", "spam"},
-		Interval: 2 * time.Hour,
-	},
-}
-
 var (
 	logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log    = logger.With().Str("sys", "main").Timestamp().Logger()
@@ -59,6 +24,11 @@ func main() {
 	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
 	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
 
+	conf, err := config.FromFile("./config.toml")
+	if err != nil {
+		log.Fatal().Msgf("Failed to parse config: %s", err)
+	}
+
 	t, err := tagger.New(conf.TagRules, conf.Cleanup.Tags)
 	if err != nil {
 		log.Fatal().Msgf("Error creating a tagger: %s", err)
@@ -67,8 +37,8 @@ func main() {
 		log.Fatal().Msgf("Failed to refresh mailboxes: %s", err)
 	}
 
-	setupRefresh(t)
-	setupCleanup(t)
+	setupRefresh(conf, t)
+	setupCleanup(conf.Cleanup.Interval.Duration, t)
 
 	if len(conf.Addresses) == 0 {
 		log.Fatal().Msg("Specify at least one address")
@@ -77,7 +47,7 @@ func main() {
 	client := smtp.New(
 		fmt.Sprintf("%s <%s>", conf.Name, conf.Addresses[0]),
 		conf.Submission,
-		&conf,
+		&conf.Submission,
 	)
 
 	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client)
@@ -92,7 +62,7 @@ func main() {
 	}
 }
 
-func setupRefresh(t *tagger.Tagger) {
+func setupRefresh(conf *config.Config, t *tagger.Tagger) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal().Msgf("Failed to create FS watcher: %s", err)
@@ -103,9 +73,11 @@ func setupRefresh(t *tagger.Tagger) {
 			continue
 		}
 
-		path := filepath.Join(conf.Maildir, mailbox.Folder, "new")
-		if err := watcher.Add(path); err != nil {
-			log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
+		for _, folder := range conf.Refresh.Watch {
+			path := filepath.Join(conf.Maildir, mailbox.Folder, folder)
+			if err := watcher.Add(path); err != nil {
+				log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
+			}
 		}
 	}
 
@@ -118,7 +90,7 @@ func setupRefresh(t *tagger.Tagger) {
 		}
 	}()
 	go func() {
-		ticker := time.NewTicker(conf.RefreshInterval)
+		ticker := time.NewTicker(conf.Refresh.Interval.Duration)
 		for range ticker.C {
 			if err := t.RefreshMailboxes(); err != nil {
 				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
@@ -127,9 +99,9 @@ func setupRefresh(t *tagger.Tagger) {
 	}()
 }
 
-func setupCleanup(t *tagger.Tagger) {
+func setupCleanup(interval time.Duration, t *tagger.Tagger) {
 	go func() {
-		ticker := time.NewTicker(conf.RefreshInterval)
+		ticker := time.NewTicker(interval)
 		for range ticker.C {
 			if err := t.Cleanup(); err != nil {
 				log.Warn().Err(err).Msg("Failed to cleanup mailboxes")
