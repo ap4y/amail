@@ -40,14 +40,6 @@
     setInterval(() => refreshMailboxes(), refreshInterval);
   });
 
-  $: console.log(
-    "selected",
-    $selectedMailbox,
-    $selectedThread,
-    $selectedMessage,
-    $searchTerms
-  );
-
   $: currentMailbox =
     $searchTerms?.length > 0
       ? { id: "search", terms: $searchTerms, tags: [] }

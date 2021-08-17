@@ -9,7 +9,7 @@
   export let wrap = 80;
 
   $: content = parseMessageBody(body);
-  $: console.log(body, content);
+  $: console.debug(`selected message ${messageId},`, "body:", body, "parsed content:", content);
 </script>
 
 {#if content.text.length > 0}

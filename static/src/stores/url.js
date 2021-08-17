@@ -26,6 +26,7 @@ window.addEventListener("popstate", update);
 function pushState(state, url) {
   history.pushState(state, "", url);
   update({ state });
+  console.debug(`navigating to ${url}, state: `, state);
 }
 
 const url = derived(href, ($href) => $href);
