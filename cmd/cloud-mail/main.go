@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/http"
 	"ap4y.me/cloud-mail/smtp"
+	"ap4y.me/cloud-mail/static/public"
 	"ap4y.me/cloud-mail/tagger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog"
@@ -17,14 +19,18 @@ import (
 var (
 	logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log    = logger.With().Str("sys", "main").Timestamp().Logger()
+
+	confPath = flag.String("config", "config.toml", "path to the config file")
 )
 
 func main() {
+	flag.Parse()
+
 	tagger.SetLogger(logger.With().Str("sys", "tag").Timestamp().Logger())
 	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
 	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
 
-	conf, err := config.FromFile("./config.toml")
+	conf, err := config.FromFile(*confPath)
 	if err != nil {
 		log.Fatal().Msgf("Failed to parse config: %s", err)
 	}
@@ -50,7 +56,7 @@ func main() {
 		&conf.Submission,
 	)
 
-	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client)
+	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client, public.Content)
 	if err != nil {
 		log.Fatal().Msgf("Error creating an http server: %s", err)
 	}

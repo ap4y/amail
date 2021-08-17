@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -35,7 +36,11 @@ type Server struct {
 	mailboxes []config.Mailbox
 }
 
-func NewServer(name string, addresses []string, mailboxes []config.Mailbox, smtpClient *smtp.Client) (*Server, error) {
+func NewServer(
+	name string, addresses []string, mailboxes []config.Mailbox,
+	smtpClient *smtp.Client, staticBundle fs.FS,
+) (*Server, error) {
+
 	c, err := notmuch.NewClient()
 	if err != nil {
 		return nil, err
@@ -62,7 +67,7 @@ func NewServer(name string, addresses []string, mailboxes []config.Mailbox, smtp
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
 	})
 
-	fs := http.FileServer(http.Dir("./static/public")) // TODO: replace with embed
+	fs := http.FileServer(http.FS(staticBundle))
 	for _, mailbox := range mailboxes {
 		r.Handle(fmt.Sprintf("/%s*", mailbox.ID), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			r.URL.Path = "/"
