@@ -9,7 +9,7 @@ username = "ap4y"
 password_command = "pass ap4y.me/mail"
 
 [refresh]
-watch = ["cur", "new"]
+watch = ["INBOX/cur", "INBOX/new"]
 interval = "1m"
 
 [cleanup]

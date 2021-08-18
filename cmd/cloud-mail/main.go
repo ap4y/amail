@@ -78,23 +78,17 @@ func setupRefresh(conf *config.Config, t *tagger.Tagger) {
 		log.Fatal().Msgf("Failed to create FS watcher: %s", err)
 	}
 	defer watcher.Close()
-	for _, mailbox := range conf.Mailboxes {
-		if mailbox.Folder == "" {
-			continue
+	for _, folder := range conf.Refresh.Watch {
+		path := filepath.Join(conf.Maildir, folder)
+		if err := watcher.Add(path); err != nil {
+			log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
 		}
-
-		for _, folder := range conf.Refresh.Watch {
-			path := filepath.Join(conf.Maildir, mailbox.Folder, folder)
-			if err := watcher.Add(path); err != nil {
-				log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
-			}
-			log.Info().Msgf("Added %s to FS watcher", path)
-		}
+		log.Info().Msgf("Added %s to FS watcher", path)
 	}
 
 	go func() {
 		for event := range watcher.Events {
-			log.Debug().Msgf("FS event in folder %s, event: %d", event.Name, event.Op)
+			log.Info().Msgf("FS event in folder %s, event: %d", event.Name, event.Op)
 			if err := t.RefreshMailboxes(); err != nil {
 				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
 			}
