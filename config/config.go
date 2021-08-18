@@ -85,12 +85,20 @@ func (s *Submission) Password(username, hostname string) (string, error) {
 		return "", ErrInvalidPasswordCommand
 	}
 
-	fields := strings.Fields(s.PasswordCommand)
-	if len(fields) == 0 {
-		return "", ErrInvalidPasswordCommand
+	var cmd *exec.Cmd
+	shellPath, err := exec.LookPath("sh")
+	if err == nil {
+		args := []string{"-c", s.PasswordCommand}
+		cmd = exec.Command(shellPath, args...)
+	} else {
+		fields := strings.Fields(s.PasswordCommand)
+		if len(fields) == 0 {
+			return "", ErrInvalidPasswordCommand
+		}
+
+		cmd = exec.Command(fields[0], fields[1:]...)
 	}
 
-	cmd := exec.Command(fields[0], fields[1:]...)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
