@@ -16,6 +16,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const notmuchConfigPath = ".notmuch-config"
+
 var (
 	logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log    = logger.With().Str("sys", "main").Timestamp().Logger()
@@ -34,6 +36,8 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("Failed to parse config: %s", err)
 	}
+
+	ensureNotmuchConfig(conf)
 
 	t, err := tagger.New(conf.TagRules, conf.Cleanup.Tags)
 	if err != nil {
@@ -84,6 +88,7 @@ func setupRefresh(conf *config.Config, t *tagger.Tagger) {
 			if err := watcher.Add(path); err != nil {
 				log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
 			}
+			log.Info().Msgf("Added %s to FS watcher", path)
 		}
 	}
 
@@ -114,4 +119,26 @@ func setupCleanup(interval time.Duration, t *tagger.Tagger) {
 			}
 		}
 	}()
+}
+
+func ensureNotmuchConfig(conf *config.Config) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal().Msgf("Failed to resolve home dir path: %s", err)
+	}
+
+	path := filepath.Join(homeDir, notmuchConfigPath)
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		return
+	}
+
+	log.Info().Msgf("%s does not exist. Will generate a new one.", path)
+	f, err := os.Create(path)
+	if err != nil {
+		log.Fatal().Msgf("Failed to create %s: %s", path, err)
+	}
+
+	if err := conf.WriteNotmuchConfig(f); err != nil {
+		log.Fatal().Msgf("Failed to write %s: %s", path, err)
+	}
 }

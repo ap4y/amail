@@ -1,8 +1,11 @@
 package config
 
 import (
+	"embed"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"io/ioutil"
 	"os/exec"
 	"strings"
@@ -10,6 +13,9 @@ import (
 
 	"github.com/BurntSushi/toml"
 )
+
+//go:embed notmuch-config.tmpl
+var notmuchConf embed.FS
 
 var ErrInvalidPasswordCommand = errors.New("invalid PasswordCommand")
 
@@ -36,6 +42,27 @@ func FromFile(file string) (*Config, error) {
 	}
 
 	return &conf, nil
+}
+
+func (c *Config) PrimaryAddress() string {
+	if len(c.Addresses) == 0 {
+		panic("empty Addresses in config")
+	}
+
+	return c.Addresses[0]
+}
+
+func (c *Config) OtherAddresses() []string {
+	return c.Addresses[1:]
+}
+
+func (c *Config) WriteNotmuchConfig(w io.Writer) error {
+	tmpl, err := template.ParseFS(notmuchConf, "notmuch-config.tmpl")
+	if err != nil {
+		return err
+	}
+
+	return tmpl.Execute(w, c)
 }
 
 type Mailbox struct {

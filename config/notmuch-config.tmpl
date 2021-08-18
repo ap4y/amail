@@ -1,0 +1,17 @@
+[database]
+path={{.Maildir}}
+
+[user]
+name={{.Name}}
+primary_email={{.PrimaryAddress}}
+other_email={{range .OtherAddresses}}{{.}};{{end}}
+
+[new]
+tags=inbox;unread;
+ignore=draft;
+
+[search]
+exclude_tags=draft;
+
+[maildir]
+synchronize_flags=true
