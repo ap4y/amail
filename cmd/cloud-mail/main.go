@@ -23,14 +23,21 @@ var (
 	log    = logger.With().Str("sys", "main").Timestamp().Logger()
 
 	confPath = flag.String("config", "config.toml", "path to the config file")
+	logLevel = flag.String("log", "debug", "log level for logger")
 )
 
 func main() {
 	flag.Parse()
 
-	tagger.SetLogger(logger.With().Str("sys", "tag").Timestamp().Logger())
-	http.SetLogger(logger.With().Str("sys", "http").Timestamp().Logger())
-	smtp.SetLogger(logger.With().Str("sys", "smtp").Timestamp().Logger())
+	lvl, err := zerolog.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatal().Msgf("Failed to parse log level: %s", err)
+	}
+
+	log = log.Level(lvl)
+	tagger.SetLogger(logger.Level(lvl).With().Str("sys", "tag").Timestamp().Logger())
+	http.SetLogger(logger.Level(lvl).With().Str("sys", "http").Timestamp().Logger())
+	smtp.SetLogger(logger.Level(lvl).With().Str("sys", "smtp").Timestamp().Logger())
 
 	conf, err := config.FromFile(*confPath)
 	if err != nil {
