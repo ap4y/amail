@@ -14,6 +14,10 @@ func SetLogger(l zerolog.Logger) {
 	logger = l
 }
 
+type Refresher interface {
+	RefreshMailboxes() error
+}
+
 type Tagger struct {
 	client      *notmuch.Client
 	tagRules    map[string]string
@@ -30,7 +34,7 @@ func New(tagRules map[string]string, cleanupTags []string) (*Tagger, error) {
 }
 
 func (t *Tagger) RefreshMailboxes() error {
-	logger.Debug().Msg("Re-indexing maildir")
+	logger.Info().Msg("Re-indexing maildir")
 	if err := t.client.Index(); err != nil {
 		return err
 	}

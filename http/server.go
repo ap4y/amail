@@ -15,6 +15,7 @@ import (
 	"ap4y.me/cloud-mail/config"
 	"ap4y.me/cloud-mail/notmuch"
 	"ap4y.me/cloud-mail/smtp"
+	"ap4y.me/cloud-mail/tagger"
 	"github.com/go-chi/chi"
 	"github.com/rs/zerolog"
 )
@@ -30,6 +31,7 @@ type Server struct {
 
 	client     *notmuch.Client
 	smtpClient *smtp.Client
+	refresher  tagger.Refresher
 
 	name      string
 	addresses []string
@@ -38,7 +40,7 @@ type Server struct {
 
 func NewServer(
 	name string, addresses []string, mailboxes []config.Mailbox,
-	smtpClient *smtp.Client, staticBundle fs.FS,
+	smtpClient *smtp.Client, refresher tagger.Refresher, staticBundle fs.FS,
 ) (*Server, error) {
 
 	c, err := notmuch.NewClient()
@@ -46,7 +48,11 @@ func NewServer(
 		return nil, err
 	}
 
-	s := &Server{client: c, smtpClient: smtpClient, name: name, addresses: addresses, mailboxes: mailboxes}
+	s := &Server{
+		client: c, smtpClient: smtpClient, name: name,
+		addresses: addresses, mailboxes: mailboxes,
+		refresher: refresher,
+	}
 
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
@@ -86,6 +92,11 @@ func NewServer(
 
 func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 	data := AccountData{s.addresses[0], s.name, make([]MailboxStats, len(s.mailboxes))}
+
+	if err := s.refresher.RefreshMailboxes(); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
 
 	for idx, mailbox := range s.mailboxes {
 		unread, err := s.client.Count(mailbox.Terms+" and tag:unread", notmuch.CountOutputMessages)
