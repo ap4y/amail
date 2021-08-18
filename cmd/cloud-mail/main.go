@@ -122,12 +122,16 @@ func setupCleanup(interval time.Duration, t *tagger.Tagger) {
 }
 
 func ensureNotmuchConfig(conf *config.Config) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal().Msgf("Failed to resolve home dir path: %s", err)
+	path := os.Getenv("NOTMUCH_CONFIG")
+	if path == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal().Msgf("Failed to resolve home dir path: %s", err)
+		}
+
+		path = filepath.Join(homeDir, notmuchConfigPath)
 	}
 
-	path := filepath.Join(homeDir, notmuchConfigPath)
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return
 	}
