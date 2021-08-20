@@ -1,7 +1,7 @@
 import { writable, derived } from "svelte/store";
 import ApiClient from "../client";
 
-export const address = writable(null);
+export const address = writable("");
 export const name = writable(null);
 
 const { subscribe, set, update } = writable([]);

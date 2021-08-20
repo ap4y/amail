@@ -171,7 +171,11 @@
       {/if}
     </div>
 
-    <div class="flex flex-row">
+    <div class="flex flex-row items-center">
+      {#if error}
+        <p class="mr-3 text-red-500 font-semibold">Failed to send email</p>
+      {/if}
+
       <button
         class="h-10 p-2 mr-3 rounded hover:border-red-500 bg-white text-gray-700 active:bg-red-300 focus:outline-none border"
       >
@@ -186,11 +190,15 @@
       </button>
 
       <button
-        class="bg-red-500 hover:bg-red-600 active:bg-red-700 focus:outline-none px-3 text-white h-10 rounded border-0 font-semibold"
+        class={`${
+          submiting
+            ? "bg-red-300"
+            : "bg-red-500 hover:bg-red-600 active:bg-red-700"
+        } focus:outline-none px-3 text-white h-10 rounded border-0 font-semibold`}
         disabled={submiting}
         on:click={() => submitMessage()}
       >
-        Send
+        {submiting ? "Sending" : "Send"}
       </button>
     </div>
   </div>

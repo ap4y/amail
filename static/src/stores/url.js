@@ -38,9 +38,9 @@ function selectMailbox(mailbox) {
 
 function selectThread(mailbox, thread) {
   const state = history.state;
-  const newState = { mailbox, thread, searchTerms: state.searchTerms };
+  const newState = { mailbox, thread, searchTerms: state?.searchTerms };
   let path = `/${mailbox}/${thread}`;
-  if (state.searchTerms) {
+  if (state?.searchTerms) {
     path += `?terms=${escape(state.searchTerms)}`;
   }
 

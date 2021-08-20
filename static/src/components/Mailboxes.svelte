@@ -8,7 +8,13 @@
 </script>
 
 <ul>
-  {#await mailboxes.fetch() then _}
+  {#await mailboxes.fetch()}
+    {#if collapsed}
+      <p class="text-gray-300 text-xl text-center">...</p>
+    {:else}
+      <p class="text-gray-300 text-lg text-center">...loading</p>
+    {/if}
+  {:then}
     {#each $mailboxes as mailbox, idx}
       <li
         class={`relative p-1 mb-2 flex flex-row ${
@@ -63,5 +69,11 @@
         {/if}
       </li>
     {/each}
+  {:catch}
+    {#if collapsed}
+      <p class="text-red-500 text-sm text-center">Error</p>
+    {:else}
+      <p class="text-red-500 text-lg text-center">Error</p>
+    {/if}
   {/await}
 </ul>

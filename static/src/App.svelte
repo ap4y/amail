@@ -166,7 +166,9 @@
       } flex-shrink-0 border-gray-300 overflow-y-auto`}
       bind:this={threadList}
     >
-      <Threads mailbox={currentMailbox} />
+      {#if currentMailbox}
+        <Threads mailbox={currentMailbox} />
+      {/if}
     </section>
 
     {#if $selectedThread}
