@@ -33,4 +33,8 @@ const setTags = (threadId, tags) => {
   );
 };
 
-export default { subscribe, fetch, setTags };
+const remove = (threadId) => {
+  update((threads) => threads.filter((thread) => thread != threadId));
+};
+
+export default { subscribe, fetch, setTags, remove };

@@ -2,7 +2,7 @@
   import { updateThreadTags, tagChanges } from "../lib/tagging";
 
   import mailboxes from "../stores/mailboxes";
-  import { selectedMailbox } from "../stores/url";
+  import url, { selectedMailbox, selectedThread } from "../stores/url";
   import selectedThreads from "../stores/selected_threads";
   import threads from "../stores/threads";
 
@@ -24,6 +24,12 @@
   async function move(folder) {
     for (const thread of $selectedThreads) {
       const { changes } = tagChanges($mailboxes, $selectedMailbox, folder);
+
+      if ($selectedThread === thread) {
+        url.deselectThread();
+      }
+      threads.remove(thread);
+
       await updateThreadTags(thread, [...changes, "-unread"]);
       selectedThreads.toggle({ thread });
     }
