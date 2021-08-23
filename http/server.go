@@ -99,13 +99,17 @@ func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for idx, mailbox := range s.mailboxes {
-		unread, err := s.client.Count(mailbox.Terms+" and tag:unread", notmuch.CountOutputMessages)
-		if err != nil {
-			sendError(w, r, err, http.StatusBadRequest)
-			return
-		}
+		if mailbox.Tracked {
+			unread, err := s.client.Count(mailbox.Terms+" and tag:unread", notmuch.CountOutputMessages)
+			if err != nil {
+				sendError(w, r, err, http.StatusBadRequest)
+				return
+			}
 
-		data.Mailboxes[idx] = MailboxStats{mailbox, unread}
+			data.Mailboxes[idx] = MailboxStats{mailbox, unread}
+		} else {
+			data.Mailboxes[idx] = MailboxStats{mailbox, 0}
+		}
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {

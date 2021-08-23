@@ -70,6 +70,7 @@ type Mailbox struct {
 	Folder     string   `json:"folder"`
 	Terms      string   `json:"terms"`
 	ToggleTags []string `json:"tags" toml:"toggle_tags"`
+	Tracked    bool
 }
 
 type Submission struct {

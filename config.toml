@@ -29,6 +29,7 @@ id = "inbox"
 folder = "INBOX"
 terms = "tag:personal and tag:inbox"
 toggle_tags = ["inbox"]
+tracked = true
 
 [[mailboxes]]
 id = "archive"
