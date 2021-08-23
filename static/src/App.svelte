@@ -28,6 +28,7 @@
     findOtherMessage,
     findLastMessage,
   } from "./stores/thread";
+  import threads, { currentPage } from "./stores/threads";
   import selectedMessage from "./stores/message";
   import newMessage from "./stores/new_message";
   import selectedThreads from "./stores/selected_threads";
@@ -167,7 +168,13 @@
       bind:this={threadList}
     >
       {#if currentMailbox}
-        <Threads mailbox={currentMailbox} />
+        {#await threads.fetch(currentMailbox.terms, $currentPage)}
+          <Threads mailbox={currentMailbox} />
+        {:then _}
+          <Threads mailbox={currentMailbox} />
+        {:catch _}
+          <p class="p-5 font-semibold text-red-500">Failed to load threads</p>
+        {/await}
       {/if}
     </section>
 
