@@ -1,8 +1,10 @@
 <script>
-  import InboxIcon from "./InboxIcon.svelte";
   import { mailboxTitles } from "../config";
   import url, { selectedMailbox } from "../stores/url";
   import mailboxes from "../stores/mailboxes";
+
+  import InboxIcon from "./InboxIcon.svelte";
+  import MailboxButton from "./MailboxButton.svelte";
 
   export let collapsed;
 </script>
@@ -31,19 +33,7 @@
           on:click|preventDefault={() => url.selectMailbox(mailbox.id)}
         >
           {#if collapsed}
-            {#if mailboxTitles[mailbox.id]}
-              <span class="w-5">
-                <InboxIcon id={mailbox.id} />
-              </span>
-            {:else}
-              <span class="w-7">
-                <InboxIcon id={mailbox.id} />
-              </span>
-              <span
-                class="absolute text-sm left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-2/3"
-                >{mailbox.id[0]}</span
-              >
-            {/if}
+            <MailboxButton id={mailbox.id} />
           {:else}
             <span class="mr-2 w-5">
               <InboxIcon id={mailbox.id} />
