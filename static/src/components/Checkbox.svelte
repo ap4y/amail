@@ -7,7 +7,7 @@
 </script>
 
 <div
-  class="w-5 h-5 rounded border-2 text-gray-500 {borderClass} {className}"
+  class="flex-shrink-0 w-5 h-5 rounded border-2 text-gray-500 {borderClass} {className}"
   on:click|stopPropagation|preventDefault
 >
   {#if checked}

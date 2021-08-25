@@ -31,7 +31,7 @@
   <a
     href={`/${$selectedMailbox}/${thread.thread}`}
     data-thread={thread.thread}
-    class={`h-10 flex flex-row items-center border-b hover:bg-gray-200 ${unreadClasses(
+    class={`py-2 flex flex-wrap sm:flex-nowrap sm:flex-row items-center border-b hover:bg-gray-200 ${unreadClasses(
       thread
     )} ${$selectedThread === thread.thread ? "bg-red-100 font-semibold" : ""}`}
     on:click|preventDefault={() =>
@@ -42,16 +42,16 @@
       checked={$selectedThreads.includes(thread.thread)}
       on:click={() => selectedThreads.toggle(thread)}
     />
-    <span class="px-3 w-28">{thread.date_relative}</span>
-    <span class="pr-6 w-40 truncate">{thread.authors}</span>
+    <span class="px-3 w-22 sm:w-28 truncate text-sm sm:text-base">{thread.date_relative}</span>
+    <span class="px-3 flex-1 sm:flex-none sm:w-40 truncate text-sm sm:text-base">{thread.authors}</span>
     <span
-      class={`truncate flex-1 ${
+      class={`sm:truncate w-full sm:flex-1 px-3 pt-2 sm:pt-0 ${
         thread.tags.includes("unread") ? "text-red-500" : "text-gray-800"
       }`}
     >
       {thread.subject}
     </span>
-    <div class="inline-flex px-3">
+    <div class="hidden sm:inline-flex px-3">
       {#each thread.tags as tag}
         {#if !commonTag(tag)}
           <TagBadge class="mr-2" {tag} />

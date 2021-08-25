@@ -142,7 +142,7 @@
   </ToolbarButton>
 {/if}
 
-<div>
+<div class="relative">
   <ToolbarButton
     tooltip="Tag"
     class="mr-3"
@@ -160,7 +160,7 @@
 
   {#if showTagPicker}
     <TagPicker
-      class="absolute"
+      class="absolute -right-5 top-20 sm:top-10 z-5"
       tags={message.tags}
       on:add={addTag}
       on:remove={removeTag}
@@ -169,7 +169,7 @@
   {/if}
 </div>
 
-<div class="flex flex-row ml-auto">
+<div class="flex flex-row pt-2 sm:pt-0 sm:ml-auto">
   <ToolbarButton tooltip="Reply" class="mr-1" on:click={() => reply("sender")}>
     <svg
       xmlns="http://www.w3.org/2000/svg"

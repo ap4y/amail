@@ -36,5 +36,6 @@
       removed={message.tags.includes("trash")}
     />
   </div>
-  <span class="text-gray-500 text-sm">{message.headers.Date}</span>
+  <span class="text-gray-500 text-sm hidden sm:inline">{message.headers.Date}</span>
+  <span class="text-gray-500 text-sm sm:hidden">{message.date_relative}</span>
 </div>

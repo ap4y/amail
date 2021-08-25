@@ -68,7 +68,7 @@
 </script>
 
 <div
-  class="absolute bottom-5 right-5 bg-white shadow rounded border-2 border-gray-500"
+  class="absolute top-0 sm:top-auto left-0 sm:left-auto bottom-0 sm:bottom-5 right-0 sm:right-5 flex flex-col bg-white shadow rounded border-2 border-gray-500 z-50"
   style="max-width: calc(85ch + 2rem)"
 >
   <div
@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <div class="p-3">
+  <div class="p-3 flex-1">
     <TextEditor {blocks} on:input={(e) => onInput(e)} />
   </div>
 

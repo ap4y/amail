@@ -115,8 +115,9 @@
 
 <div class="h-screen w-screen flex">
   <aside
-    style={`width: ${sidebarCollapsed ? 4 : 14}rem`}
-    class="flex-shrink-0 flex flex-col bg-gray-600"
+    class={`fixed h-screen flex-shrink-0 flex flex-col bg-gray-600 ${
+      sidebarCollapsed ? "w-16" : "w-44 sm:w-56"
+    }`}
   >
     <div
       class={`h-14 flex flex-row ${
@@ -150,11 +151,12 @@
   </aside>
 
   <main
-    class="flex flex-col"
-    style={`width: calc(100% - ${sidebarCollapsed ? 4 : 14}rem)`}
+    class={`flex flex-col w-full ${
+      sidebarCollapsed ? "pl-16" : "pl-44 sm:pl-56"
+    }`}
   >
     <header
-      class="h-14 flex-shrink-0 flex flex-row items-center justify-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
+      class="flex sm:flex-row flex-wrap items-center sm:justify-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
     >
       <SearchField />
       <ThreadToolbar disabled={$selectedThreads.length === 0} />
@@ -163,7 +165,7 @@
 
     <section
       class={`${
-        $selectedThread ? "h-60 border-b-8" : "flex-1"
+        $selectedThread ? "h-40 sm:h-60 border-b-8" : "flex-1"
       } flex-shrink-0 border-gray-300 overflow-y-auto`}
       bind:this={threadList}
     >
@@ -179,7 +181,26 @@
     </section>
 
     {#if $selectedThread}
-      <section class="flex-1 w-full overflow-y-auto" bind:this={messageList}>
+      <section
+        class="relative flex-1 w-full overflow-y-auto"
+        bind:this={messageList}
+      >
+        <div class="sticky top-3 w-full right-3 z-10">
+          <button
+            class="absolute right-3 bg-gray-200 p-1 rounded text-gray-500 order-0 hover:text-gray-800 active:text-gray-500 focus:outline-none"
+            on:click={() => url.deselectThread()}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              class="w-5 fill-current"
+              ><path d="M0 0h24v24H0z" fill="none" /><path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+              /></svg
+            >
+          </button>
+        </div>
+
         <Thread thread={$thread} />
       </section>
     {/if}

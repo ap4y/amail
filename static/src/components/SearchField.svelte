@@ -10,7 +10,7 @@
   }
 </script>
 
-<div class="relative text-gray-300">
+<div class="relative text-gray-300 flex flex-1 sm:flex-none sm:w-96 mb-2 sm:mb-0">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -21,7 +21,7 @@
   >
   <input
     type="search"
-    class="w-96 h-full outline-none pl-8 pr-1 py-1 bg-gray-600 text-sm border rounded border-gray-500 hover:border-gray-400 focus:border-gray-400"
+    class="flex-1 h-full outline-none pl-8 pr-1 py-1 bg-gray-600 text-sm border rounded border-gray-500 hover:border-gray-400 focus:border-gray-400"
     placeholder="Search threads"
     on:keypress={onKeyPress}
     bind:value={terms}

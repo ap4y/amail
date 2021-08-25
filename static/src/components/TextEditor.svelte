@@ -51,7 +51,7 @@
 <div
   contenteditable="true"
   style="width: 85ch;"
-  class="h-80 border rounded p-3 outline-none border-gray-400 hover:border-gray-500 focus:border-red-300 overflow-y-auto"
+  class="max-w-full h-full sm:h-80 border rounded p-3 outline-none border-gray-400 hover:border-gray-500 focus:border-red-300 overflow-y-auto"
   on:input={input}
   on:beforeinput={beforeInput}
 >

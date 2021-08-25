@@ -16,15 +16,15 @@
   {#each content.text as block}
     {#if block.type === "quote"}
       <p
-        style={`width: ${wrap}ch;`}
-        class="whitespace-pre-line break-words text-gray-600 border-l-8 border-gray-400 pl-3"
+        style={`max-width: ${wrap}ch;`}
+        class="whitespace-pre-line break-words text-gray-600 border-l-8 border-gray-400 pl-3 w-full"
       >
         {block.content}
       </p>
     {:else if block.type === "deepquote"}
       <DeepquoteBlock content={block.content} />
     {:else}
-      <p style={`width: ${wrap}ch;`} class="whitespace-pre-line break-words">
+      <p style={`max-width: ${wrap}ch;`} class="whitespace-pre-line break-words w-full">
         {#each linkify(block.content) as text}
           {#if text instanceof URL}
             <a
