@@ -158,6 +158,11 @@ func (s *Server) threadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(messages) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewEncoder(w).Encode(messages[0]); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}

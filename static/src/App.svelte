@@ -116,7 +116,7 @@
 <div class="h-screen w-screen flex">
   <aside
     class={`absolute sm:fixed h-screen flex-shrink-0 flex flex-col bg-gray-600 z-10 ${
-      sidebarCollapsed ? "hidden sm:flex w-16" : "w-44 sm:w-56"
+      sidebarCollapsed ? "hidden sm:flex w-16" : "w-56"
     }`}
   >
     <div

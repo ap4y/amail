@@ -6,8 +6,6 @@
   import Checkbox from "./Checkbox.svelte";
   import TagBadge from "./TagBadge.svelte";
 
-  export let mailbox;
-
   function unreadClasses({ tags }) {
     return tags.includes("unread")
       ? "bg-gray-50 text-red-500 visited:text-red-500"
