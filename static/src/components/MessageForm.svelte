@@ -161,9 +161,10 @@
       {#if $newMessage?.attachments}
         {#each $newMessage.attachments as attach, idx}
           <button
-            class="h-10 border border-gray-600 p-2 mr-1 mb-1 rounded text-gray-600 text-sm hover:border-red-500 active:bg-red-300 focus:outline-none"
+            style="max-width: 10rem;"
+            class="flex h-10 border border-gray-600 p-2 mr-1 mb-1 rounded text-gray-600 text-sm hover:border-red-500 active:bg-red-300 focus:outline-none"
             on:click={() => removeAttachment(idx)}
-            ><strong class="mr-1">{attach.name}</strong> ({formatSize(
+            ><strong class="mr-1 truncate">{attach.name}</strong> ({formatSize(
               attach.size
             )})</button
           >
