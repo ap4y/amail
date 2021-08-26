@@ -8,10 +8,6 @@ port = 587
 username = "ap4y"
 password_command = "pass ap4y.me/mail"
 
-[refresh]
-watch = ["INBOX/cur", "INBOX/new"]
-interval = "1m"
-
 [cleanup]
 tags = ["trash", "spam"]
 interval = "2h"

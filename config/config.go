@@ -26,7 +26,6 @@ type Config struct {
 	Mailboxes  []Mailbox
 	TagRules   map[string]string `toml:"tag_rules"`
 	Submission Submission
-	Refresh    Refresh
 	Cleanup    Cleanup
 }
 
@@ -116,11 +115,6 @@ func (d *Duration) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
 	return err
-}
-
-type Refresh struct {
-	Watch    []string
-	Interval Duration
 }
 
 type Cleanup struct {

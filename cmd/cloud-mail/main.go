@@ -12,7 +12,6 @@ import (
 	"ap4y.me/cloud-mail/smtp"
 	"ap4y.me/cloud-mail/static/public"
 	"ap4y.me/cloud-mail/tagger"
-	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog"
 )
 
@@ -54,7 +53,6 @@ func main() {
 		log.Fatal().Msgf("Failed to refresh mailboxes: %s", err)
 	}
 
-	setupRefresh(conf, t)
 	setupCleanup(conf.Cleanup.Interval.Duration, t)
 
 	if len(conf.Addresses) == 0 {
@@ -77,38 +75,6 @@ func main() {
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal().Msgf("Startup error: %s", err)
 	}
-}
-
-func setupRefresh(conf *config.Config, t *tagger.Tagger) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal().Msgf("Failed to create FS watcher: %s", err)
-	}
-	defer watcher.Close()
-	for _, folder := range conf.Refresh.Watch {
-		path := filepath.Join(conf.Maildir, folder)
-		if err := watcher.Add(path); err != nil {
-			log.Fatal().Msgf("Failed to add %s to FS watcher: %s", path, err)
-		}
-		log.Info().Msgf("Added %s to FS watcher", path)
-	}
-
-	go func() {
-		for event := range watcher.Events {
-			log.Info().Msgf("FS event in folder %s, event: %d", event.Name, event.Op)
-			if err := t.RefreshMailboxes(); err != nil {
-				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
-			}
-		}
-	}()
-	go func() {
-		ticker := time.NewTicker(conf.Refresh.Interval.Duration)
-		for range ticker.C {
-			if err := t.RefreshMailboxes(); err != nil {
-				log.Warn().Err(err).Msg("Failed to refresh mailboxes")
-			}
-		}
-	}()
 }
 
 func setupCleanup(interval time.Duration, t *tagger.Tagger) {
