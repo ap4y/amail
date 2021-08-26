@@ -115,8 +115,8 @@
 
 <div class="h-screen w-screen flex">
   <aside
-    class={`fixed h-screen flex-shrink-0 flex flex-col bg-gray-600 ${
-      sidebarCollapsed ? "w-16" : "w-44 sm:w-56"
+    class={`absolute sm:fixed h-screen flex-shrink-0 flex flex-col bg-gray-600 z-10 ${
+      sidebarCollapsed ? "hidden sm:flex w-16" : "w-44 sm:w-56"
     }`}
   >
     <div
@@ -151,13 +151,18 @@
   </aside>
 
   <main
-    class={`flex flex-col w-full ${
-      sidebarCollapsed ? "pl-16" : "pl-44 sm:pl-56"
-    }`}
+    class={`flex flex-col w-full ${sidebarCollapsed ? "sm:pl-16" : "sm:pl-56"}`}
   >
     <header
-      class="flex sm:flex-row flex-wrap items-center sm:justify-center py-3 pr-3 border-b border-gray-500 bg-gray-600"
+      class="flex sm:flex-row flex-wrap items-center sm:justify-center py-3 pr-3 pl-3 sm:pl-0 border-b border-gray-500 bg-gray-600"
     >
+      <div class="sm:hidden mr-3 pb-1">
+        <MenuButton
+          collapsed={sidebarCollapsed}
+          on:click={() => (sidebarCollapsed = !sidebarCollapsed)}
+        />
+      </div>
+
       <SearchField />
       <ThreadToolbar disabled={$selectedThreads.length === 0} />
       <ThreadPages />
@@ -165,7 +170,7 @@
 
     <section
       class={`${
-        $selectedThread ? "h-40 sm:h-60 border-b-8" : "flex-1"
+        $selectedThread ? "h-0 sm:h-60 border-b-8" : "flex-1"
       } flex-shrink-0 border-gray-300 overflow-y-auto`}
       bind:this={threadList}
     >
