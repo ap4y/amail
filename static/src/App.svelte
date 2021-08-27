@@ -109,6 +109,102 @@
     const item = messageList.querySelector(`div[data-message="${message.id}"]`);
     item.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  function nextThread() {
+    let node;
+
+    if ($selectedThread) {
+      const row = threadList.querySelector(
+        `a[data-thread="${$selectedThread}"]`
+      );
+      node = row?.nextSibling;
+    } else if (threadList.children.length > 0) {
+      node = threadList.children[0];
+    }
+
+    if (node?.dataset?.thread) {
+      url.selectThread($selectedMailbox, node.dataset.thread);
+    }
+  }
+
+  function prevThread() {
+    if (!$selectedThread) {
+      return;
+    }
+
+    const row = threadList.querySelector(`a[data-thread="${$selectedThread}"]`);
+    const node = row?.previousSibling;
+    if (node?.dataset?.thread) {
+      url.selectThread($selectedMailbox, node.dataset.thread);
+    }
+  }
+
+  function nextMessage() {
+    if (!$selectedThread) {
+      return;
+    }
+
+    const messages = [...messageList.querySelectorAll(`div[data-message]`)];
+    const idx = messages.findIndex(
+      (node) => node.dataset.message === $selectedMessage
+    );
+
+    if (idx < 0 || idx >= messages.length) {
+      return;
+    }
+
+    const node = messages[idx + 1];
+    if (node?.dataset?.message) {
+      selectedMessage.selectMessage(node.dataset.message);
+    }
+  }
+
+  function prevMessage() {
+    if (!$selectedThread) {
+      return;
+    }
+
+    const messages = [...messageList.querySelectorAll(`div[data-message]`)];
+    const idx = messages.findIndex(
+      (node) => node.dataset.message === $selectedMessage
+    );
+
+    if (idx <= 0 || idx > messages.length) {
+      return;
+    }
+
+    const node = messages[idx - 1];
+    if (node?.dataset?.message) {
+      selectedMessage.selectMessage(node.dataset.message);
+    }
+  }
+
+  const keys = {
+    n: nextThread,
+    p: prevThread,
+    Escape: () => url.deselectThread(),
+    N: () => messageList?.scrollBy(0, 200),
+    P: () => messageList?.scrollBy(0, -200),
+    a: nextMessage,
+    e: prevMessage,
+    C: () => newMessage.create(),
+    r: () => newMessage.reply($selectedMessage, "sender"),
+    R: () => newMessage.reply($selectedMessage, "all"),
+    f: () => newMessage.forward(findMessage($thread, $selectedMessage)),
+  };
+
+  document.onkeydown = (e) => {
+    if ($newMessage) {
+      return;
+    }
+
+    const { key } = e;
+    if (keys[key]) {
+      console.debug(`found hotkey for ${key}`);
+      keys[key]();
+      e.preventDefault();
+    }
+  };
 </script>
 
 <Tailwind />
@@ -176,9 +272,9 @@
     >
       {#if currentMailbox}
         {#await threads.fetch(currentMailbox.terms, $currentPage)}
-          <Threads mailbox={currentMailbox} />
+          <Threads />
         {:then _}
-          <Threads mailbox={currentMailbox} />
+          <Threads />
         {:catch _}
           <p class="p-5 font-semibold text-red-500">Failed to load threads</p>
         {/await}

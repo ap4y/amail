@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import ApiClient from "../client";
 
 import { quotedText } from "../lib/email";
 
@@ -8,7 +9,9 @@ function create() {
   set({ to: [], cc: [], subject: "", body: "", headers: {}, attachments: [] });
 }
 
-function reply(reply) {
+async function reply(messageId, replyTo) {
+  const reply = await ApiClient.default.replyToMessage(messageId, replyTo);
+
   const { To, Cc, Subject, ...rest } = reply["reply-headers"];
   const { headers, body } = reply.original;
 

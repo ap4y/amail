@@ -8,12 +8,10 @@
   export let message;
 </script>
 
-<div class="relative bg-gray-100" data-message={message.id}>
+<div class="relative bg-gray-100">
   <MessageInfo {message} />
 
-  <div class="flex flex-wrap sm:flex-row p-3 border-b border-t">
-    <MessageToolbar {message} />
-  </div>
+  <MessageToolbar {message} />
 </div>
 
 <div class="p-5 border-b-2 border-gray-200">

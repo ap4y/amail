@@ -12,6 +12,10 @@
     ? "border-red-300"
     : "border-gray-400 hover:border-gray-500";
 
+  export function focus() {
+    input.focus();
+  }
+
   function formattedAddress(address) {
     const matches = /(.*)\s\<(.*)\>/.exec(address);
     if (!matches) return address;

@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import ApiClient from "../client";
   import { address, name } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
@@ -12,7 +12,12 @@
   const dispatch = createEventDispatcher();
   let submiting = false;
   let error = null;
+  let toInput;
   let fileInput;
+
+  onMount(() => {
+    toInput.focus();
+  });
 
   async function submitMessage() {
     error = null;
@@ -65,11 +70,22 @@
       attachments: $newMessage.attachments.filter((_, idx) => idx !== index),
     });
   }
+
+  function onKeyDown(e) {
+    if (e.key === "k" && e.ctrlKey) {
+      e.preventDefault();
+      dispatch("close");
+    } else if (e.key === "c" && e.ctrlKey) {
+      e.preventDefault();
+      submitMessage();
+    }
+  }
 </script>
 
 <div
   class="absolute top-0 sm:top-auto left-0 sm:left-auto bottom-0 sm:bottom-5 right-0 sm:right-5 flex flex-col bg-white shadow rounded border-2 border-gray-500 z-50"
   style="max-width: calc(85ch + 2rem)"
+  on:keydown={onKeyDown}
 >
   <div
     class="px-3 py-2 flex flex-row items-center justify-between bg-gray-500 text-white"
@@ -106,6 +122,7 @@
         id="to"
         value={$newMessage?.to}
         on:change={({ detail }) => newMessage.setField({ to: detail })}
+        bind:this={toInput}
       />
     </div>
 
