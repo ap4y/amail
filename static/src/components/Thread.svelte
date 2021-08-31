@@ -4,6 +4,7 @@
   import selectedMessage from "../stores/message";
 
   export let thread;
+  export let activeMessage;
   export let level = 0;
 
   function hiddenMessage({ tags }) {
@@ -19,12 +20,12 @@
           {#if message.id !== $selectedMessage}
             <CollapsedMessage {message} {level} />
           {:else}
-            <Message {message} />
+            <Message {message} bind:this={activeMessage} />
           {/if}
         </div>
       {/if}
 
-      <svelte:self thread={subthread} level={level + 1} />
+      <svelte:self thread={subthread} level={level + 1} bind:activeMessage />
     {/each}
   {/if}
 </div>

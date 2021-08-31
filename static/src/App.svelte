@@ -33,7 +33,7 @@
   import selectedThreads from "./stores/selected_threads";
 
   let refreshing = false;
-  let threadList, messageList, searchField;
+  let threadList, messageList, searchField, activeMessage;
   let sidebarCollapsed = true;
   let searching = false;
 
@@ -194,14 +194,17 @@
     Escape: () => url.deselectThread(),
     N: () => messageList?.scrollBy(0, 200),
     P: () => messageList?.scrollBy(0, -200),
-    a: nextMessage,
-    e: prevMessage,
+    e: nextMessage,
+    a: prevMessage,
     C: () => newMessage.create(),
     r: () => newMessage.reply($selectedMessage, "sender"),
     R: () => newMessage.reply($selectedMessage, "all"),
     f: () => newMessage.forward(findMessage($thread, $selectedMessage)),
     s: () => searchField.focus(),
-    V: () => openHtml(),
+    V: openHtml,
+    A: () => activeMessage?.move("archive"),
+    D: () => activeMessage?.move("trash"),
+    J: () => activeMessage?.move("spam"),
   };
 
   document.onkeydown = (e) => {
@@ -311,7 +314,7 @@
           </button>
         </div>
 
-        <Thread thread={$thread} />
+        <Thread thread={$thread} bind:activeMessage />
       </section>
     {/if}
   </main>

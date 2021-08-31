@@ -1,12 +1,9 @@
 <script>
-  import { updateTags, updateThreadTags, tagChanges } from "../lib/tagging";
+  import { createEventDispatcher } from "svelte";
+  import { updateTags } from "../lib/tagging";
 
   import ApiClient from "../client";
-  import url, { selectedMailbox, selectedThread } from "../stores/url";
-  import mailboxes from "../stores/mailboxes";
-  import threads from "../stores/threads";
-  import thread, { findOtherMessage } from "../stores/thread";
-  import selectedMessage from "../stores/message";
+  import { selectedMailbox, selectedThread } from "../stores/url";
   import newMessage from "../stores/new_message";
 
   import ToolbarButton from "./ToolbarButton.svelte";
@@ -14,36 +11,15 @@
 
   export let message;
 
+  const dispatch = createEventDispatcher();
   let showTagPicker = false;
 
   function markUnread() {
     updateTags($selectedThread, message.id, ["+unread"]);
   }
 
-  function selectNextThread() {
-    const idx = $threads.findIndex(({ thread }) => thread === $selectedThread);
-    const nextThread = $threads[idx + 1];
-    if (nextThread) {
-      url.selectThread($selectedMailbox, nextThread.thread);
-    } else {
-      url.deselectThread();
-    }
-  }
-
   function move(folder) {
-    const { changes, fromTags } = tagChanges(
-      $mailboxes,
-      $selectedMailbox,
-      folder
-    );
-    updateTags($selectedThread, message.id, changes);
-
-    const other = findOtherMessage($thread, message.id, fromTags);
-    if (other) {
-      selectedMessage.selectMessage(other.id);
-    } else {
-      selectNextThread();
-    }
+    dispatch("move", folder);
   }
 
   function addTag({ detail }) {
