@@ -33,8 +33,9 @@
   import selectedThreads from "./stores/selected_threads";
 
   let refreshing = false;
-  let threadList, messageList;
+  let threadList, messageList, searchField;
   let sidebarCollapsed = true;
+  let searching = false;
 
   onMount(() => {
     setInterval(() => refreshMailboxes(), refreshInterval);
@@ -190,10 +191,11 @@
     r: () => newMessage.reply($selectedMessage, "sender"),
     R: () => newMessage.reply($selectedMessage, "all"),
     f: () => newMessage.forward(findMessage($thread, $selectedMessage)),
+    s: () => searchField.focus(),
   };
 
   document.onkeydown = (e) => {
-    if ($newMessage) {
+    if ($newMessage || searching) {
       return;
     }
 
@@ -258,7 +260,11 @@
         />
       </div>
 
-      <SearchField />
+      <SearchField
+        bind:this={searchField}
+        on:focus={() => (searching = true)}
+        on:blur={() => (searching = false)}
+      />
       <ThreadToolbar disabled={$selectedThreads.length === 0} />
       <ThreadPages />
     </header>

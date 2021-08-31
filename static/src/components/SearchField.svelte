@@ -1,6 +1,12 @@
 <script>
   import url, { searchTerms } from "../stores/url";
 
+  let input;
+
+  export function focus() {
+    input.focus();
+  }
+
   $: terms = $searchTerms;
 
   function onKeyPress({ charCode }) {
@@ -10,7 +16,9 @@
   }
 </script>
 
-<div class="relative text-gray-300 flex flex-1 sm:flex-none sm:w-96 mb-2 sm:mb-0">
+<div
+  class="relative text-gray-300 flex flex-1 sm:flex-none sm:w-96 mb-2 sm:mb-0"
+>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -25,5 +33,8 @@
     placeholder="Search threads"
     on:keypress={onKeyPress}
     bind:value={terms}
+    bind:this={input}
+    on:focus
+    on:blur
   />
 </div>
