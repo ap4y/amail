@@ -1,6 +1,5 @@
 import { derived, writable } from "svelte/store";
 import { mailboxIds } from "../config";
-import { currentPage } from "./threads";
 import selectedMessage from "./message";
 
 const initialURL = new URL(window.location.href);
@@ -32,7 +31,6 @@ function pushState(state, url) {
 const url = derived(href, ($href) => $href);
 
 function selectMailbox(mailbox) {
-  currentPage.set(0);
   pushState({ mailbox }, `/${mailbox}`);
 }
 

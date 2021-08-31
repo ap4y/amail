@@ -2,11 +2,17 @@
   import { mailboxTitles } from "../config";
   import url, { selectedMailbox } from "../stores/url";
   import mailboxes from "../stores/mailboxes";
+  import { currentPage } from "../stores/threads";
 
   import InboxIcon from "./InboxIcon.svelte";
   import MailboxButton from "./MailboxButton.svelte";
 
   export let collapsed;
+
+  function selectMailbox(id) {
+    currentPage.set(0);
+    url.selectMailbox(id);
+  }
 </script>
 
 <ul>
@@ -30,7 +36,7 @@
         <a
           href={`/${mailbox.id}`}
           class="flex flex-row items-center hover:text-red-500 visited:text-current"
-          on:click|preventDefault={() => url.selectMailbox(mailbox.id)}
+          on:click|preventDefault={() => selectMailbox(mailbox.id)}
         >
           {#if collapsed}
             <MailboxButton id={mailbox.id} />

@@ -1,13 +1,14 @@
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import ApiClient from "../client";
 import { threadsPerPage } from "../config";
+import { selectedMailbox } from "./url";
 
 export const currentPage = writable(0);
 export const totalThreads = writable(0);
 
 const { subscribe, set, update } = writable([]);
 
-const fetch = async (terms, currentPage) => {
+const fetch = async ({ id, terms }, currentPage) => {
   if (!terms) {
     set([]);
     return [];
@@ -19,8 +20,10 @@ const fetch = async (terms, currentPage) => {
     threadsPerPage
   );
 
-  totalThreads.set(total);
-  set(threads);
+  if (get(selectedMailbox) === id) {
+    totalThreads.set(total);
+    set(threads);
+  }
 
   return threads;
 };

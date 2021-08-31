@@ -1,10 +1,14 @@
 <script>
   import url, { selectedMailbox, selectedThread } from "../stores/url";
-  import threads from "../stores/threads";
+  import threads, { currentPage } from "../stores/threads";
   import selectedThreads from "../stores/selected_threads";
 
   import Checkbox from "./Checkbox.svelte";
   import TagBadge from "./TagBadge.svelte";
+
+  export let mailbox;
+
+  $: threads.fetch(mailbox, $currentPage);
 
   function unreadClasses({ tags }) {
     return tags.includes("unread")
@@ -40,8 +44,12 @@
       checked={$selectedThreads.includes(thread.thread)}
       on:click={() => selectedThreads.toggle(thread)}
     />
-    <span class="px-3 w-22 sm:w-28 truncate text-xs sm:text-base">{thread.date_relative}</span>
-    <span class="px-3 flex-1 sm:flex-none sm:w-40 truncate text-xs sm:text-base">{thread.authors}</span>
+    <span class="px-3 w-22 sm:w-28 truncate text-xs sm:text-base"
+      >{thread.date_relative}</span
+    >
+    <span class="pr-3 flex-1 sm:flex-none sm:w-40 truncate text-xs sm:text-base"
+      >{thread.authors}</span
+    >
     <span
       class={`sm:truncate w-full sm:flex-1 px-3 pt-2 sm:pt-0 ${
         thread.tags.includes("unread") ? "text-red-500" : "text-gray-800"
