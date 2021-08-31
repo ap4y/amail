@@ -205,6 +205,8 @@
     A: () => activeMessage?.move("archive"),
     D: () => activeMessage?.move("trash"),
     J: () => activeMessage?.move("spam"),
+    "alt+i": () => url.selectMailbox("inbox"),
+    "alt+a": () => url.selectMailbox("archive"),
   };
 
   document.onkeydown = (e) => {
@@ -212,10 +214,11 @@
       return;
     }
 
-    const { key } = e;
-    if (keys[key]) {
-      console.debug(`found hotkey for ${key}`);
-      keys[key]();
+    const { key, altKey } = e;
+    const comboKey = `${altKey ? "alt+" : ""}${key}`;
+    if (keys[comboKey]) {
+      console.debug(`found hotkey for ${comboKey}`);
+      keys[comboKey]();
       e.preventDefault();
     }
   };
