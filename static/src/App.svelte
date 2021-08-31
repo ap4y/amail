@@ -179,6 +179,15 @@
     }
   }
 
+  function openHtml() {
+    const htmlItems = messageList?.querySelectorAll(`a[data-html-body]`);
+    if (!htmlItems || htmlItems.length === 0) {
+      return;
+    }
+
+    htmlItems[0].click();
+  }
+
   const keys = {
     n: nextThread,
     p: prevThread,
@@ -192,6 +201,7 @@
     R: () => newMessage.reply($selectedMessage, "all"),
     f: () => newMessage.forward(findMessage($thread, $selectedMessage)),
     s: () => searchField.focus(),
+    V: () => openHtml(),
   };
 
   document.onkeydown = (e) => {

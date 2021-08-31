@@ -59,7 +59,9 @@
       <a
         href={`/api/messages/${messageId}/parts/${block.id}`}
         class="block text-red-400 hover:text-red-500 font-semibold underline"
-        target="_blank">Open HTML</a
+        target="_blank"
+        data-html-body="true"
+      >Open HTML</a
       >
     {/each}
   </p>
