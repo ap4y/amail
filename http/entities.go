@@ -17,6 +17,6 @@ type MailboxStats struct {
 }
 
 type Threads struct {
-	Total   int              `json:"total"`
+	HasMore bool             `json:"has_more"`
 	Threads []notmuch.Thread `json:"threads"`
 }

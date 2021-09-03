@@ -131,19 +131,13 @@ func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
 		page = val
 	}
 
-	threads, err := s.client.Search(term, perPage, page*perPage)
+	threads, err := s.client.Search(term, perPage+1, page*perPage)
 	if err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	total, err := s.client.Count(term, notmuch.CountOutputThreads)
-	if err != nil {
-		sendError(w, r, err, http.StatusBadRequest)
-		return
-	}
-
-	res := Threads{total, threads}
+	res := Threads{len(threads) == perPage+1, threads}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}

@@ -4,7 +4,7 @@ import { threadsPerPage } from "../config";
 import { selectedMailbox } from "./url";
 
 export const currentPage = writable(0);
-export const totalThreads = writable(0);
+export const hasMore = writable(false);
 
 const { subscribe, set, update } = writable([]);
 
@@ -14,14 +14,14 @@ const fetch = async ({ id, terms }, currentPage) => {
     return [];
   }
 
-  const { total, threads } = await ApiClient.default.threads(
+  const { has_more, threads } = await ApiClient.default.threads(
     terms,
     currentPage || 0,
     threadsPerPage
   );
 
   if (get(selectedMailbox) === id) {
-    totalThreads.set(total);
+    hasMore.set(has_more);
     set(threads);
   }
 

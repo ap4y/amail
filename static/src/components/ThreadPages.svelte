@@ -1,8 +1,6 @@
 <script>
   import { threadsPerPage } from "../config";
-  import { currentPage, totalThreads } from "../stores/threads";
-
-  $: lastPage = Math.ceil($totalThreads / threadsPerPage);
+  import { currentPage, hasMore } from "../stores/threads";
 </script>
 
 <div class="flex flex-row items-center ml-auto text-gray-300">
@@ -22,7 +20,7 @@
   </button>
   <span class="font-semibold px-3">{$currentPage + 1}</span>
   <button
-    disabled={$currentPage == lastPage - 1}
+    disabled={!$hasMore}
     class="border-0 rounded hover:bg-gray-700 active:bg-gray-800 focus:outline-none disabled:opacity-50 disabled:bg-transparent"
     on:click={() => currentPage.update((page) => page + 1)}
   >
