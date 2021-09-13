@@ -1,7 +1,9 @@
 package tagger
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"strings"
 
 	"ap4y.me/cloud-mail/notmuch"
@@ -34,9 +36,17 @@ func New(tagRules map[string]string, cleanupTags []string) (*Tagger, error) {
 }
 
 func (t *Tagger) RefreshMailboxes() error {
-	logger.Info().Msg("Re-indexing maildir")
-	if err := t.client.Index(); err != nil {
-		return err
+	logger.Debug().Msg("Re-indexing maildir")
+	for {
+		err := t.client.Index()
+		if err == nil {
+			break
+		}
+
+		var e *exec.ExitError
+		if !errors.As(err, &e) || e.ExitCode() != 75 {
+			break
+		}
 	}
 
 	for tags, terms := range t.tagRules {

@@ -173,7 +173,7 @@ func (c *Client) exec(cmd string, in io.Reader, args ...string) ([]byte, error) 
 
 	out, err := ec.Output()
 	if err != nil {
-		return nil, fmt.Errorf("exec: %v. %s", err, out)
+		return nil, fmt.Errorf("exec: %w. %s", err, out)
 	}
 
 	return out, nil
