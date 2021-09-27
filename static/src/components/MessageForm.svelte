@@ -72,10 +72,10 @@
   }
 
   function onKeyDown(e) {
-    if (e.key === "k" && e.ctrlKey) {
+    if (e.key === "k" && e.altKey) {
       e.preventDefault();
       dispatch("close");
-    } else if (e.key === "c" && e.ctrlKey) {
+    } else if (e.key === "c" && e.altKey) {
       e.preventDefault();
       submitMessage();
     }
