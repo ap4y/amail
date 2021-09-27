@@ -44,6 +44,13 @@
 
   function onInput({ detail }) {
     blocks = detail;
+    console.debug(
+      "text content",
+      "blocks:",
+      blocks,
+      "content:\n",
+      blocks.map(({ content }) => content).join("")
+    );
     newMessage.setField({
       body: blocks.map(({ content }) => content).join(""),
     });

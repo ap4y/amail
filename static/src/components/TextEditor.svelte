@@ -10,8 +10,21 @@
     const ranges = e.getTargetRanges();
     if (ranges.length === 0) return;
 
-    const { startContainer, startOffset } = ranges[0];
+    const { startContainer, startOffset, endOffset } = ranges[0];
     const node = startContainer.parentNode;
+
+    if (node.dataset.type === "text" && e.inputType === "insertFromPaste") {
+      const text = e.dataTransfer.getData("text");
+      if (text.includes("\n")) {
+        e.preventDefault();
+        node.innerHTML =
+          startContainer.wholeText.slice(0, startOffset) +
+          text +
+          startContainer.wholeText.slice(endOffset);
+        input(e);
+      }
+      return;
+    }
 
     if (node.dataset.type !== "quote") return;
 
