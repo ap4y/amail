@@ -209,12 +209,16 @@
     "alt+a": () => url.selectMailbox("archive"),
   };
 
-  document.onkeydown = (e) => {
-    if ($newMessage || searching) {
+  function handleKeydown (e)  {
+    const { key, altKey, target } = e;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
       return;
     }
 
-    const { key, altKey } = e;
+    if (target.tagName === "DIV" && Boolean(target.contentEditable)) {
+      return;
+    }
+
     const comboKey = `${altKey ? "alt+" : ""}${key}`;
     if (keys[comboKey]) {
       console.debug(`found hotkey for ${comboKey}`);
@@ -223,6 +227,8 @@
     }
   };
 </script>
+
+<svelte:window on:keydown={handleKeydown}/>
 
 <Tailwind />
 
