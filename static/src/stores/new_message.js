@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import ApiClient from "../client";
 
-import { quotedText } from "../lib/email";
+import { quotedText, getAttachments } from "../lib/email";
 
 const { subscribe, set, update } = writable(null);
 
@@ -28,8 +28,19 @@ async function reply(messageId, replyTo) {
   });
 }
 
-function forward({ body, headers }) {
+function forward({ id, body, headers }) {
   const content = body.map((item) => quotedText(item)).join("\n");
+  const attachments = [];
+  body.forEach((item) => {
+    getAttachments(item).forEach((attach) =>
+      attachments.push({
+        id: `${id}:${attach.id}`,
+        name: attach.filename,
+        size: attach["content-length"],
+        type: attach["content-type"],
+      })
+    );
+  });
   set({
     to: [],
     cc: [],
@@ -38,7 +49,7 @@ function forward({ body, headers }) {
     body: content,
     originalHeaders: headers,
     reply: true,
-    attachments: [],
+    attachments,
   });
 }
 

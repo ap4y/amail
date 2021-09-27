@@ -49,9 +49,13 @@ class ApiClient {
     Object.keys(message.headers).forEach((key) =>
       formData.append(`headers[${key}]`, message.headers[key])
     );
-    message.attachments.forEach((file) =>
-      formData.append("attachments[]", file, file.name)
-    );
+    message.attachments.forEach((file) => {
+      if (file instanceof File) {
+        formData.append("attachments[]", file, file.name);
+      } else {
+        formData.append("attachments[]", file.id);
+      }
+    });
 
     const res = await fetch(`${this.baseURL}/messages`, {
       method: "POST",

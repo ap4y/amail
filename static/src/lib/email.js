@@ -8,6 +8,16 @@ function getTextContent(body, text = []) {
   return text;
 }
 
+export function getAttachments(body, attachments = []) {
+  if (body["content-type"].startsWith("multipart")) {
+    body.content.forEach((child) => getAttachments(child, attachments));
+  } else if (body["content-disposition"] === "attachment") {
+    attachments.push(body);
+  }
+
+  return attachments;
+}
+
 export function quotedText(body) {
   return getTextContent(body)
     .map((content) => content.replace(/^/gm, "> "))

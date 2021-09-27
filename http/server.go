@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"mime/multipart"
@@ -247,12 +248,44 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := r.MultipartForm
+	attachments := make([]*smtp.Attachment, 0)
+	for _, attach := range form.File["attachments[]"] {
+		f, err := attach.Open()
+		if err != nil {
+			sendError(w, r, err, http.StatusBadRequest)
+			return
+		}
+
+		defer f.Close()
+		attachments = append(attachments, &smtp.Attachment{ReadSeeker: f, Filename: attach.Filename})
+	}
+
+	for _, attach := range form.Value["attachments[]"] {
+		items := strings.Split(attach, ":")
+		if len(items) != 2 {
+			sendError(w, r, errors.New("invalid attachment: id is not valid"), http.StatusBadRequest)
+			return
+		}
+
+		attachment, part, err := s.client.Attachment(items[0], items[1])
+		if err != nil {
+			sendError(w, r, err, http.StatusBadRequest)
+			return
+		}
+
+		if part["filename"] != nil {
+			attachments = append(attachments, &smtp.Attachment{ReadSeeker: attachment, Filename: part["filename"].(string)})
+		} else {
+			attachments = append(attachments, &smtp.Attachment{ReadSeeker: attachment, Filename: "attachment"})
+		}
+	}
+
 	msg := &smtp.Message{
 		To:          form.Value["to[]"],
 		CC:          form.Value["cc[]"],
 		Body:        r.FormValue("body"),
 		Subject:     r.FormValue("subject"),
-		Attachments: form.File["attachments[]"],
+		Attachments: attachments,
 		Headers:     formMap(form, "headers"),
 	}
 
