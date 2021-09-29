@@ -40,6 +40,10 @@ class ApiClient {
     return this.request("PUT", "/tags", { terms, tags });
   }
 
+  w3mRender(messageId, part) {
+    return this.request("GET", `/messages/${messageId}/w3m/${part}`);
+  }
+
   async sendMessage(message) {
     const formData = new FormData();
     message.to.forEach((addr) => formData.append("to[]", addr));

@@ -1,4 +1,5 @@
 <script>
+  import ApiClient from "../client";
   import { parseMessageBody } from "../lib/email";
   import { linkify } from "../lib/linkify";
 
@@ -24,7 +25,10 @@
     {:else if block.type === "deepquote"}
       <DeepquoteBlock content={block.content} />
     {:else}
-      <p style={`max-width: ${wrap}ch;`} class="whitespace-pre-line break-words w-full">
+      <p
+        style={`max-width: ${wrap}ch;`}
+        class="whitespace-pre-line break-words w-full"
+      >
         {#each linkify(block.content) as text}
           {#if text instanceof URL}
             <a
@@ -50,7 +54,23 @@
     {/if}
   {/each}
 {:else}
-  <p class="text-lg">Email has no plaintext content.</p>
+  <p class="text-lg mb-4">
+    Email has no plaintext content. Presenting converted html content.
+  </p>
+  <div>
+    {#if content.html.length > 0}
+      {#each content.html as block}
+        {#await ApiClient.default.w3mRender(messageId, block.id) then textContent}
+          <p
+            style={`max-width: ${wrap}ch;`}
+            class="whitespace-pre-line break-words w-full"
+          >
+            {textContent.text}
+          </p>
+        {/await}
+      {/each}
+    {/if}
+  </div>
 {/if}
 
 {#if content.html.length > 0}
@@ -60,8 +80,7 @@
         href={`/api/messages/${messageId}/parts/${block.id}`}
         class="block text-red-400 hover:text-red-500 font-semibold underline"
         target="_blank"
-        data-html-body="true"
-      >Open HTML</a
+        data-html-body="true">Open HTML</a
       >
     {/each}
   </p>

@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"mime/multipart"
 	"net/http"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -72,6 +73,7 @@ func NewServer(
 		r.Post("/messages", s.sendMessageHandler)
 		r.Get("/messages/{messageID}/reply", s.messageReplyHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
+		r.Get("/messages/{messageID}/w3m/{partID}", s.messageW3mHandler)
 	})
 
 	fs := http.FileServer(http.FS(staticBundle))
@@ -191,6 +193,35 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeContent(w, r, filename, time.Now(), attachment)
+}
+
+func (s *Server) messageW3mHandler(w http.ResponseWriter, r *http.Request) {
+	base64ID := chi.URLParam(r, "messageID")
+	partID := chi.URLParam(r, "partID")
+
+	messageID, err := base64.StdEncoding.DecodeString(base64ID)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	attachment, part, err := s.client.Attachment(string(messageID), partID)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	cmd := exec.Command("w3m", "-T", part["content-type"].(string), "-dump")
+	cmd.Stdin = attachment
+	out, err := cmd.Output()
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]string{"text": string(out)}); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+	}
 }
 
 func (s *Server) messageReplyHandler(w http.ResponseWriter, r *http.Request) {
