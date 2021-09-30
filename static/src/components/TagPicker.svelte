@@ -1,6 +1,8 @@
 <script>
   import { createEventDispatcher } from "svelte";
 
+  import mailboxes from "../stores/mailboxes";
+
   import TagBadge from "./TagBadge.svelte";
 
   export let tags = [];
@@ -10,6 +12,14 @@
 
   const dispatch = createEventDispatcher();
   let newTag = "";
+
+  $: allTags = $mailboxes
+    .reduce((acc, { tags }) => acc.concat(tags), [])
+    .concat(tags)
+    .reduce(
+      (acc, tag) => (acc.indexOf(tag) === -1 ? acc.concat([tag]) : acc),
+      []
+    );
 
   function onKeyPress({ charCode }) {
     if (charCode === 13) {
@@ -46,13 +56,22 @@
   />
 
   <div class="flex flex-row flex-wrap">
-    {#each tags as tag}
-      <TagBadge
-        class="mb-2 mr-2"
-        viewOnly={false}
-        {tag}
-        on:click={() => dispatch("remove", tag)}
-      />
+    {#each allTags as tag}
+      {#if tags.includes(tag)}
+        <TagBadge
+          class="mb-2 mr-2 text-red-600"
+          viewOnly={false}
+          {tag}
+          on:click={() => dispatch("remove", tag)}
+        />
+      {:else}
+        <TagBadge
+          class="mb-2 mr-2"
+          viewOnly={false}
+          {tag}
+          on:click={() => dispatch("add", tag)}
+        />
+      {/if}
     {/each}
   </div>
 </div>
