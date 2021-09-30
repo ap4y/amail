@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM alpine
 
-RUN apk add --no-cache "notmuch"
+RUN apk add --no-cache "notmuch" "w3m"
 COPY --from=builder /cloud-mail /cloud-mail
 
 EXPOSE 8000
