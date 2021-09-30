@@ -39,11 +39,11 @@
   }
 </script>
 
-<div class="flex flex-wrap sm:flex-row p-3 border-b border-t">
+<div class="relative flex flex-wrap sm:flex-row px-3 py-2 border-b border-t">
   <ToolbarButton
     tooltip="Mark as unread"
     tooltipPosition="left"
-    class="mr-3"
+    class="mr-3 py-1"
     on:click={markUnread}
   >
     <svg
@@ -59,7 +59,7 @@
   {#if $selectedMailbox !== "search"}
     <ToolbarButton
       tooltip="Move to archive"
-      class="mr-1"
+      class="mr-1 py-1"
       on:click={() => move("archive")}
     >
       <svg
@@ -76,7 +76,7 @@
     </ToolbarButton>
     <ToolbarButton
       tooltip="Move to inbox"
-      class="mr-1"
+      class="mr-1 py-1"
       on:click={() => move("inbox")}
     >
       <svg
@@ -90,7 +90,7 @@
     </ToolbarButton>
     <ToolbarButton
       tooltip="Move to spam"
-      class="mr-1"
+      class="mr-1 py-1"
       on:click={() => move("spam")}
     >
       <svg
@@ -104,7 +104,7 @@
     </ToolbarButton>
     <ToolbarButton
       tooltip="Move to trash"
-      class="mr-3"
+      class="mr-3 py-1"
       on:click={() => move("trash")}
     >
       <svg
@@ -118,7 +118,7 @@
     </ToolbarButton>
   {/if}
 
-  <div class="relative">
+  <div class="py-1">
     <ToolbarButton
       tooltip="Tag"
       class="mr-3"
@@ -136,7 +136,7 @@
 
     {#if showTagPicker}
       <TagPicker
-        class="absolute -right-5 top-20 sm:top-10 z-5"
+        class="absolute left-1/2 transform sm:transform-none -translate-x-1/2 sm:left-10 top-14 z-10"
         tags={message.tags}
         on:add={addTag}
         on:remove={removeTag}
@@ -145,7 +145,7 @@
     {/if}
   </div>
 
-  <div class="flex flex-row pt-2 sm:pt-0 sm:ml-auto">
+  <div class="flex flex-row py-1 sm:pt-0 sm:ml-auto">
     <ToolbarButton
       tooltip="Reply"
       class="mr-1"
