@@ -3,6 +3,7 @@ import ApiClient from "../client";
 
 export const address = writable("");
 export const name = writable(null);
+export const predefinedTags = writable([]);
 
 const { subscribe, set, update } = writable([]);
 
@@ -11,6 +12,7 @@ const fetch = async () => {
   set(res.mailboxes);
   address.set(res.address);
   name.set(res.name);
+  predefinedTags.set(res.tags);
   return res.mailboxes;
 };
 

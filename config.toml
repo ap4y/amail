@@ -1,6 +1,7 @@
 name = "Arthur Evsifeev"
 addresses = ["mail@ap4y.me", "ap4y@me.com", "arthur.evstifeev@gmail.com"]
 maildir = "/home/ap4y/.mail/ap4y"
+tags = ["test"]
 
 [submission]
 hostname = "mail.ap4y.me"

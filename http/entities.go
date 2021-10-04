@@ -9,6 +9,7 @@ type AccountData struct {
 	Address   string         `json:"address"`
 	Name      string         `json:"name"`
 	Mailboxes []MailboxStats `json:"mailboxes"`
+	Tags      []string       `json:"tags"`
 }
 
 type MailboxStats struct {

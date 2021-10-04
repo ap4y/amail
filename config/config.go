@@ -23,6 +23,7 @@ type Config struct {
 	Name       string
 	Addresses  []string
 	Maildir    string
+	Tags       []string
 	Mailboxes  []Mailbox
 	TagRules   map[string]string `toml:"tag_rules"`
 	Submission Submission

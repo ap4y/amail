@@ -65,7 +65,7 @@ func main() {
 		&conf.Submission,
 	)
 
-	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, client, t, public.Content)
+	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, conf.Tags, client, t, public.Content)
 	if err != nil {
 		log.Fatal().Msgf("Error creating an http server: %s", err)
 	}

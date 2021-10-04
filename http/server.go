@@ -38,10 +38,11 @@ type Server struct {
 	name      string
 	addresses []string
 	mailboxes []config.Mailbox
+	tags      []string
 }
 
 func NewServer(
-	name string, addresses []string, mailboxes []config.Mailbox,
+	name string, addresses []string, mailboxes []config.Mailbox, tags []string,
 	smtpClient *smtp.Client, refresher tagger.Refresher, staticBundle fs.FS,
 ) (*Server, error) {
 
@@ -53,7 +54,7 @@ func NewServer(
 	s := &Server{
 		client: c, smtpClient: smtpClient, name: name,
 		addresses: addresses, mailboxes: mailboxes,
-		refresher: refresher,
+		refresher: refresher, tags: tags,
 	}
 
 	r := chi.NewRouter()
@@ -95,7 +96,7 @@ func NewServer(
 }
 
 func (s *Server) mailboxesHandler(w http.ResponseWriter, r *http.Request) {
-	data := AccountData{s.addresses[0], s.name, make([]MailboxStats, len(s.mailboxes))}
+	data := AccountData{s.addresses[0], s.name, make([]MailboxStats, len(s.mailboxes)), s.tags}
 
 	if err := s.refresher.RefreshMailboxes(); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)

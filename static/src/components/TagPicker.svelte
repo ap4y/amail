@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher } from "svelte";
 
-  import mailboxes from "../stores/mailboxes";
+  import mailboxes, { predefinedTags } from "../stores/mailboxes";
 
   import TagBadge from "./TagBadge.svelte";
 
@@ -15,6 +15,7 @@
 
   $: allTags = $mailboxes
     .reduce((acc, { tags }) => acc.concat(tags), [])
+    .concat($predefinedTags)
     .concat(tags)
     .reduce(
       (acc, tag) => (acc.indexOf(tag) === -1 ? acc.concat([tag]) : acc),
