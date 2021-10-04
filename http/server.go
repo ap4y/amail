@@ -67,6 +67,7 @@ func NewServer(
 
 		r.Get("/mailboxes", s.mailboxesHandler)
 		r.Get("/search/{term}", s.searchHandler)
+		r.Get("/address/{term}", s.addressHandler)
 		r.Put("/tags", s.tagsHandler)
 		r.Get("/threads/{threadID}", s.threadHandler)
 
@@ -142,6 +143,19 @@ func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	res := Threads{len(threads) == perPage+1, threads}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+	}
+}
+
+func (s *Server) addressHandler(w http.ResponseWriter, r *http.Request) {
+	term := chi.URLParam(r, "term")
+	addresses, err := s.client.Address(term)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(addresses); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}
 }

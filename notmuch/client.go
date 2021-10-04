@@ -164,6 +164,15 @@ func (c *Client) Insert(folder string, msg io.Reader, tags ...string) error {
 	return nil
 }
 
+func (c *Client) Address(term string) ([]map[string]string, error) {
+	var addresses []map[string]string
+	if err := c.jsonExec(&addresses, "address", term); err != nil {
+		return nil, err
+	}
+
+	return addresses, nil
+}
+
 func (c *Client) exec(cmd string, in io.Reader, args ...string) ([]byte, error) {
 	allArgs := append([]string{cmd}, args...)
 	ec := exec.Command(c.binPath, allArgs...)

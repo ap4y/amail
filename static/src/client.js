@@ -32,6 +32,10 @@ class ApiClient {
     return this.request("GET", `/search/${terms}?page=${page}&per=${perPage}`);
   }
 
+  addresses(terms) {
+    return this.request("GET", `/address/${terms}`);
+  }
+
   thread(threadId) {
     return this.request("GET", `/threads/${threadId}`);
   }
