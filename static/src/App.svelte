@@ -209,7 +209,7 @@
     "alt+a": () => url.selectMailbox("archive"),
   };
 
-  function handleKeydown (e)  {
+  function handleKeydown(e) {
     const { key, altKey, target } = e;
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
       return;
@@ -225,14 +225,21 @@
       keys[comboKey]();
       e.preventDefault();
     }
-  };
+  }
 </script>
 
-<svelte:window on:keydown={handleKeydown}/>
+<svelte:window on:keydown={handleKeydown} />
 
 <Tailwind />
 
 <div class="h-screen w-screen flex">
+  {#if !sidebarCollapsed}
+    <div
+      class="absolute top-0 bottom-0 left-0 right-0 sm:hidden"
+      on:click={() => (sidebarCollapsed = !sidebarCollapsed)}
+    />
+  {/if}
+
   <aside
     class={`absolute sm:fixed h-screen flex-shrink-0 flex flex-col bg-gray-600 z-10 ${
       sidebarCollapsed ? "hidden sm:flex w-16" : "w-56"
