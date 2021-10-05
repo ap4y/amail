@@ -91,39 +91,52 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 	}
 
 	var buf bytes.Buffer
-	mw, err := mail.CreateWriter(&buf, h)
-	if err != nil {
-		return nil, fmt.Errorf("mail: %w", err)
-	}
-
-	var th mail.InlineHeader
-	th.Set("Content-Type", "text/plain")
-	tw, err := mw.CreateInline()
-	if err != nil {
-		return nil, fmt.Errorf("mail body: %w", err)
-	}
-	w, err := tw.CreatePart(th)
-	if err != nil {
-		return nil, fmt.Errorf("mail body: %w", err)
-	}
-	if _, err := io.WriteString(w, msg.Body); err != nil {
-		return nil, fmt.Errorf("mail body: %w", err)
-	}
-	w.Close()
-	tw.Close()
-
-	for _, attach := range msg.Attachments {
-		var ah mail.AttachmentHeader
-		ah.SetFilename(attach.Filename)
-
-		w, err = mw.CreateAttachment(ah)
+	if len(msg.Attachments) == 0 {
+		h.Set("Content-Type", "text/plain")
+		w, err := mail.CreateSingleInlineWriter(&buf, h)
 		if err != nil {
-			return nil, fmt.Errorf("mail attachment: %w", err)
+			return nil, fmt.Errorf("mail: %w", err)
 		}
-		if _, err := io.Copy(w, attach); err != nil {
-			return nil, fmt.Errorf("mail attachment: %w", err)
+
+		if _, err := io.WriteString(w, msg.Body); err != nil {
+			return nil, fmt.Errorf("mail body: %w", err)
 		}
 		w.Close()
+	} else {
+		mw, err := mail.CreateWriter(&buf, h)
+		if err != nil {
+			return nil, fmt.Errorf("mail: %w", err)
+		}
+
+		var th mail.InlineHeader
+		th.Set("Content-Type", "text/plain")
+		tw, err := mw.CreateInline()
+		if err != nil {
+			return nil, fmt.Errorf("mail body: %w", err)
+		}
+		w, err := tw.CreatePart(th)
+		if err != nil {
+			return nil, fmt.Errorf("mail body: %w", err)
+		}
+		if _, err := io.WriteString(w, msg.Body); err != nil {
+			return nil, fmt.Errorf("mail body: %w", err)
+		}
+		w.Close()
+		tw.Close()
+
+		for _, attach := range msg.Attachments {
+			var ah mail.AttachmentHeader
+			ah.SetFilename(attach.Filename)
+
+			w, err = mw.CreateAttachment(ah)
+			if err != nil {
+				return nil, fmt.Errorf("mail attachment: %w", err)
+			}
+			if _, err := io.Copy(w, attach); err != nil {
+				return nil, fmt.Errorf("mail attachment: %w", err)
+			}
+			w.Close()
+		}
 	}
 
 	pass, err := c.auth.Password(c.username, c.hostname)
