@@ -35,8 +35,8 @@ type Attachment struct {
 }
 
 type Message struct {
-	To          []string      `json:"to"`
-	CC          []string      `json:"cc"`
+	To          [][2]string   `json:"to"`
+	CC          [][2]string   `json:"cc"`
 	Headers     Headers       `json:"headers"`
 	Subject     string        `json:"subject"`
 	Body        string        `json:"body"`
@@ -44,7 +44,7 @@ type Message struct {
 }
 
 type Client struct {
-	address  string
+	address  [2]string
 	username string
 	hostname string
 	port     int
@@ -52,7 +52,7 @@ type Client struct {
 	auth Authenticator
 }
 
-func New(address string, conf config.Submission, auth Authenticator) *Client {
+func New(address [2]string, conf config.Submission, auth Authenticator) *Client {
 	return &Client{address, conf.Username, conf.Hostname, conf.Port, auth}
 }
 
@@ -61,10 +61,18 @@ func (c *Client) Send(msg *Message) (*gomail.Message, error) {
 
 	m := gomail.NewMessage()
 	m.SetHeader("User-agent", userAgent)
-	m.SetHeader("From", c.address)
-	m.SetHeader("To", msg.To...)
+	m.SetHeader("From", m.FormatAddress(c.address[0], c.address[1]))
+	to := make([]string, len(msg.To))
+	for idx, addr := range msg.To {
+		to[idx] = m.FormatAddress(addr[0], addr[1])
+	}
+	m.SetHeader("To", to...)
 	if len(msg.CC) > 0 {
-		m.SetHeader("Cc", msg.CC...)
+		cc := make([]string, len(msg.CC))
+		for idx, addr := range msg.CC {
+			cc[idx] = m.FormatAddress(addr[0], addr[1])
+		}
+		m.SetHeader("Cc", cc...)
 	}
 	m.SetHeader("Subject", msg.Subject)
 	if msg.Headers != nil {
@@ -93,7 +101,7 @@ func (c *Client) Send(msg *Message) (*gomail.Message, error) {
 }
 
 func (c *Client) generateMessageId() string {
-	items := strings.Split(c.address, "@")
+	items := strings.Split(c.address[0], "@")
 
 	id := make([]byte, 5)
 	rand.Read(id)

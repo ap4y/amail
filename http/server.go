@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -328,13 +329,15 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer func(attached []*smtp.Attachment) {
 		for _, attach := range attached {
-			attach.Close()
+			if err := attach.Close(); err != nil {
+				logger.Debug().Msgf("Failed to close attachment: %v", err)
+			}
 		}
 	}(attachments)
 
 	msg := &smtp.Message{
-		To:          form.Value["to[]"],
-		CC:          form.Value["cc[]"],
+		To:          parseAddressHeader(form.Value["to[]"]),
+		CC:          parseAddressHeader(form.Value["cc[]"]),
 		Body:        r.FormValue("body"),
 		Subject:     r.FormValue("subject"),
 		Attachments: attachments,
@@ -391,4 +394,24 @@ func formMap(form *multipart.Form, fKey string) map[string]string {
 	}
 
 	return headers
+}
+
+var addressHeaderRe = regexp.MustCompile(`^(.*)\s?(?:\<(.*)?\>)?$`)
+
+func parseAddressHeader(vals []string) [][2]string {
+	result := make([][2]string, len(vals))
+	for idx, val := range vals {
+		matches := addressHeaderRe.FindAllStringSubmatch(val, -1)
+		if len(matches) == 0 {
+			continue
+		}
+
+		if matches[0][2] == "" {
+			result[idx][0] = matches[0][1]
+		} else {
+			result[idx][0] = matches[0][2]
+			result[idx][1] = matches[0][1]
+		}
+	}
+	return result
 }

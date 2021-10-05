@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -60,7 +59,7 @@ func main() {
 	}
 
 	client := smtp.New(
-		fmt.Sprintf("%s <%s>", conf.Name, conf.Addresses[0]),
+		[2]string{conf.Addresses[0], conf.Name},
 		conf.Submission,
 		&conf.Submission,
 	)
