@@ -302,7 +302,11 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		attachments = append(attachments, &smtp.Attachment{ReadCloser: f, Filename: attach.Filename})
+		attachments = append(attachments, &smtp.Attachment{
+			ReadCloser:  f,
+			Filename:    attach.Filename,
+			ContentType: attach.Header.Get("Content-Type"),
+		})
 	}
 
 	for _, attach := range form.Value["attachments[]"] {
@@ -318,11 +322,11 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if part["filename"] != nil {
-			attachments = append(attachments, &smtp.Attachment{ReadCloser: io.NopCloser(attachment), Filename: part["filename"].(string)})
-		} else {
-			attachments = append(attachments, &smtp.Attachment{ReadCloser: io.NopCloser(attachment), Filename: "attachment"})
-		}
+		attachments = append(attachments, &smtp.Attachment{
+			ReadCloser:  io.NopCloser(attachment),
+			Filename:    part["filename"].(string),
+			ContentType: part["content-type"].(string),
+		})
 	}
 
 	defer func(attached []*smtp.Attachment) {

@@ -35,7 +35,8 @@ type Headers map[string]string
 
 type Attachment struct {
 	io.ReadCloser
-	Filename string
+	Filename    string
+	ContentType string
 }
 
 type Message struct {
@@ -126,6 +127,7 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 
 		for _, attach := range msg.Attachments {
 			var ah mail.AttachmentHeader
+			ah.Set("Content-Type", attach.ContentType)
 			ah.SetFilename(attach.Filename)
 
 			w, err = mw.CreateAttachment(ah)
@@ -137,6 +139,8 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 			}
 			w.Close()
 		}
+
+		mw.Close()
 	}
 
 	pass, err := c.auth.Password(c.username, c.hostname)
