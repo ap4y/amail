@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"mime/multipart"
 	"net/http"
@@ -302,8 +303,7 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		defer f.Close()
-		attachments = append(attachments, &smtp.Attachment{ReadSeeker: f, Filename: attach.Filename})
+		attachments = append(attachments, &smtp.Attachment{ReadCloser: f, Filename: attach.Filename})
 	}
 
 	for _, attach := range form.Value["attachments[]"] {
@@ -320,11 +320,17 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if part["filename"] != nil {
-			attachments = append(attachments, &smtp.Attachment{ReadSeeker: attachment, Filename: part["filename"].(string)})
+			attachments = append(attachments, &smtp.Attachment{ReadCloser: io.NopCloser(attachment), Filename: part["filename"].(string)})
 		} else {
-			attachments = append(attachments, &smtp.Attachment{ReadSeeker: attachment, Filename: "attachment"})
+			attachments = append(attachments, &smtp.Attachment{ReadCloser: io.NopCloser(attachment), Filename: "attachment"})
 		}
 	}
+
+	defer func(attached []*smtp.Attachment) {
+		for _, attach := range attached {
+			attach.Close()
+		}
+	}(attachments)
 
 	msg := &smtp.Message{
 		To:          form.Value["to[]"],

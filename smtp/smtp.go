@@ -30,7 +30,7 @@ type Authenticator interface {
 type Headers map[string]string
 
 type Attachment struct {
-	io.ReadSeeker
+	io.ReadCloser
 	Filename string
 }
 
