@@ -71,6 +71,13 @@
     }
   }
 
+  function onBlur() {
+    focused = false;
+    input.value = null;
+    selectedOptionIdx = -1;
+    completeOptions = [];
+  }
+
   async function onInput({ target }) {
     if (target.value.length <= 2) return;
     const addresses = await ApiClient.default.addresses(target.value);
@@ -94,13 +101,14 @@
     class="flex-1 outline-none"
     bind:this={input}
     on:focus={() => (focused = true)}
-    on:blur={() => (focused = false)}
+    on:blur={onBlur}
     on:keyup={onKeyUp}
     on:input={onInput}
   />
 
   {#if completeOptions.length > 0}
     <ul
+      tabindex="-1"
       class="absolute left-0 right-0 bottom-0 max-h-40 overflow-y-auto block flex-col bg-white border-2 border-gray-600 z-10 transform translate-y-full overflow-x-hidden rounded"
       size="5"
       bind:this={completions}
