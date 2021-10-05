@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net/mail"
 	"os"
 	"path/filepath"
 	"time"
@@ -59,7 +60,7 @@ func main() {
 	}
 
 	client := smtp.New(
-		[2]string{conf.Addresses[0], conf.Name},
+		&mail.Address{Name: conf.Name, Address: conf.Addresses[0]},
 		conf.Submission,
 		&conf.Submission,
 	)

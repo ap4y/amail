@@ -1,15 +1,19 @@
 package smtp
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"ap4y.me/cloud-mail/config"
+	"github.com/emersion/go-message/mail"
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
 	"github.com/rs/zerolog"
-	"gopkg.in/gomail.v2"
 )
 
 var logger zerolog.Logger
@@ -35,8 +39,8 @@ type Attachment struct {
 }
 
 type Message struct {
-	To          [][2]string   `json:"to"`
-	CC          [][2]string   `json:"cc"`
+	To          []string      `json:"to"`
+	CC          []string      `json:"cc"`
 	Headers     Headers       `json:"headers"`
 	Subject     string        `json:"subject"`
 	Body        string        `json:"body"`
@@ -44,7 +48,7 @@ type Message struct {
 }
 
 type Client struct {
-	address  [2]string
+	address  *mail.Address
 	username string
 	hostname string
 	port     int
@@ -52,59 +56,91 @@ type Client struct {
 	auth Authenticator
 }
 
-func New(address [2]string, conf config.Submission, auth Authenticator) *Client {
+func New(address *mail.Address, conf config.Submission, auth Authenticator) *Client {
 	return &Client{address, conf.Username, conf.Hostname, conf.Port, auth}
 }
 
-func (c *Client) Send(msg *Message) (*gomail.Message, error) {
+func (c *Client) Send(msg *Message) (io.Reader, error) {
 	logger.Debug().Msgf("sending %#v", msg)
 
-	m := gomail.NewMessage()
-	m.SetHeader("User-agent", userAgent)
-	m.SetHeader("From", m.FormatAddress(c.address[0], c.address[1]))
-	to := make([]string, len(msg.To))
-	for idx, addr := range msg.To {
-		to[idx] = m.FormatAddress(addr[0], addr[1])
+	var h mail.Header
+	h.SetMessageID(c.generateMessageId())
+	h.Set("User-agent", userAgent)
+	h.SetDate(time.Now())
+	h.SetSubject(msg.Subject)
+	h.SetAddressList("From", []*mail.Address{c.address})
+
+	to := make([]*mail.Address, 0)
+	for _, addr := range msg.To {
+		parsed, err := mail.ParseAddress(addr)
+		if err == nil {
+			to = append(to, parsed)
+		}
 	}
-	m.SetHeader("To", to...)
+	h.SetAddressList("To", to)
+
 	if len(msg.CC) > 0 {
-		cc := make([]string, len(msg.CC))
-		for idx, addr := range msg.CC {
-			cc[idx] = m.FormatAddress(addr[0], addr[1])
+		cc := make([]*mail.Address, 0)
+		for _, addr := range msg.CC {
+			parsed, err := mail.ParseAddress(addr)
+			if err == nil {
+				cc = append(cc, parsed)
+			}
 		}
-		m.SetHeader("Cc", cc...)
+		h.SetAddressList("Cc", cc)
 	}
-	m.SetHeader("Subject", msg.Subject)
-	if msg.Headers != nil {
-		for key, val := range msg.Headers {
-			m.SetHeader(key, val)
-		}
+
+	var buf bytes.Buffer
+	mw, err := mail.CreateWriter(&buf, h)
+	if err != nil {
+		return nil, fmt.Errorf("mail: %w", err)
 	}
+
+	var th mail.InlineHeader
+	th.Set("Content-Type", "text/plain")
+	w, err := mw.CreateSingleInline(th)
+	if err != nil {
+		return nil, fmt.Errorf("mail: %w", err)
+	}
+	if _, err := io.WriteString(w, msg.Body); err != nil {
+		return nil, fmt.Errorf("mail body: %w", err)
+	}
+	w.Close()
 
 	for _, attach := range msg.Attachments {
-		m.Attach(attach.Filename, gomail.SetCopyFunc(func(w io.Writer) error {
-			_, err := io.Copy(w, attach)
-			return err
-		}))
-	}
+		var ah mail.AttachmentHeader
+		ah.SetFilename(attach.Filename)
 
-	m.SetHeader("Message-ID", c.generateMessageId())
-	m.SetBody("text/plain", msg.Body)
+		w, err = mw.CreateAttachment(ah)
+		if err != nil {
+			return nil, fmt.Errorf("mail attachment: %w", err)
+		}
+		if _, err := io.Copy(w, attach); err != nil {
+			return nil, fmt.Errorf("mail attachment: %w", err)
+		}
+		w.Close()
+	}
 
 	pass, err := c.auth.Password(c.username, c.hostname)
 	if err != nil {
 		return nil, fmt.Errorf("auth: %w", err)
 	}
 
-	d := gomail.NewDialer(c.hostname, c.port, c.username, pass)
-	return m, d.DialAndSend(m)
+	auth := sasl.NewPlainClient("", c.username, pass)
+	toAddr := make([]string, len(to))
+	for idx, addr := range to {
+		toAddr[idx] = addr.Address
+	}
+
+	var out bytes.Buffer
+	return &out, smtp.SendMail(fmt.Sprintf("%s:%d", c.hostname, c.port), auth, c.address.Address, toAddr, io.TeeReader(&buf, &out))
 }
 
 func (c *Client) generateMessageId() string {
-	items := strings.Split(c.address[0], "@")
+	items := strings.Split(c.address.Address, "@")
 
 	id := make([]byte, 5)
 	rand.Read(id)
 
-	return fmt.Sprintf("<%s.amail@%s>", hex.EncodeToString(id), items[1])
+	return fmt.Sprintf("%s.amail@%s", hex.EncodeToString(id), items[1])
 }

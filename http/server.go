@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,7 +10,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -336,8 +334,8 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}(attachments)
 
 	msg := &smtp.Message{
-		To:          parseAddressHeader(form.Value["to[]"]),
-		CC:          parseAddressHeader(form.Value["cc[]"]),
+		To:          form.Value["to[]"],
+		CC:          form.Value["cc[]"],
 		Body:        r.FormValue("body"),
 		Subject:     r.FormValue("subject"),
 		Attachments: attachments,
@@ -359,13 +357,7 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if mbox != nil && mbox.Folder != "" {
-		var buf bytes.Buffer
-		if _, err := m.WriteTo(&buf); err != nil {
-			sendError(w, r, err, http.StatusBadRequest)
-			return
-		}
-
-		if err := s.client.Insert(mbox.Folder, &buf, "+sent", "-inbox", "-unread"); err != nil {
+		if err := s.client.Insert(mbox.Folder, m, "+sent", "-inbox", "-unread"); err != nil {
 			sendError(w, r, err, http.StatusBadRequest)
 			return
 		}
@@ -394,24 +386,4 @@ func formMap(form *multipart.Form, fKey string) map[string]string {
 	}
 
 	return headers
-}
-
-var addressHeaderRe = regexp.MustCompile(`^(.*?)\s?(?:\<(.*)?\>)?$`)
-
-func parseAddressHeader(vals []string) [][2]string {
-	result := make([][2]string, len(vals))
-	for idx, val := range vals {
-		matches := addressHeaderRe.FindAllStringSubmatch(val, -1)
-		if len(matches) == 0 {
-			continue
-		}
-
-		if matches[0][2] == "" {
-			result[idx][0] = matches[0][1]
-		} else {
-			result[idx][0] = matches[0][2]
-			result[idx][1] = matches[0][1]
-		}
-	}
-	return result
 }
