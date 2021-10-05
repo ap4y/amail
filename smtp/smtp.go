@@ -98,14 +98,19 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 
 	var th mail.InlineHeader
 	th.Set("Content-Type", "text/plain")
-	w, err := mw.CreateSingleInline(th)
+	tw, err := mw.CreateInline()
 	if err != nil {
-		return nil, fmt.Errorf("mail: %w", err)
+		return nil, fmt.Errorf("mail body: %w", err)
+	}
+	w, err := tw.CreatePart(th)
+	if err != nil {
+		return nil, fmt.Errorf("mail body: %w", err)
 	}
 	if _, err := io.WriteString(w, msg.Body); err != nil {
 		return nil, fmt.Errorf("mail body: %w", err)
 	}
 	w.Close()
+	tw.Close()
 
 	for _, attach := range msg.Attachments {
 		var ah mail.AttachmentHeader
