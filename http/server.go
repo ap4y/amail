@@ -396,7 +396,7 @@ func formMap(form *multipart.Form, fKey string) map[string]string {
 	return headers
 }
 
-var addressHeaderRe = regexp.MustCompile(`^(.*)\s?(?:\<(.*)?\>)?$`)
+var addressHeaderRe = regexp.MustCompile(`^(.*?)\s?(?:\<(.*)?\>)?$`)
 
 func parseAddressHeader(vals []string) [][2]string {
 	result := make([][2]string, len(vals))
