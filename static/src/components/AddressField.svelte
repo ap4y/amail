@@ -37,6 +37,17 @@
     completeOptions = [];
   }
 
+  function completeOption() {
+    if (selectedOptionIdx === -1) {
+      dispatch("change", [...value, input.value]);
+      input.value = null;
+      selectedOptionIdx = -1;
+      completeOptions = [];
+    } else {
+      selectOption(selectedOptionIdx);
+    }
+  }
+
   function onKeyUp(e) {
     const { key, target } = e;
 
@@ -57,32 +68,28 @@
         block: "nearest",
       });
     } else if (key === "Enter") {
-      if (selectedOptionIdx === -1) {
-        dispatch("change", [...value, target.value]);
-        input.value = null;
-        selectedOptionIdx = -1;
-        completeOptions = [];
-      } else {
-        selectOption(selectedOptionIdx);
-      }
+      completeOption();
     } else if (key === "Backspace") {
       if (input.value.length > 0) return;
       dispatch("change", value.slice(0, value.length - 1));
     }
   }
 
-  function onBlur() {
-    focused = false;
-    input.value = null;
-    selectedOptionIdx = -1;
-    completeOptions = [];
+  function onKeyDown({ key }) {
+    if (key === "Tab") {
+      completeOption();
+    }
   }
 
-  async function onInput({ target }) {
-    if (target.value.length <= 2) return;
-    const addresses = await ApiClient.default.addresses(target.value);
-    completeOptions = addresses.map((addr) => addr["name-addr"]);
-  }
+  let timer;
+  const fetchCompletions = ({ target }) => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (target.value.length <= 2) return;
+      const addresses = await ApiClient.default.addresses(target.value);
+      completeOptions = addresses.map((addr) => addr["name-addr"]);
+    }, 500);
+  };
 </script>
 
 <div
@@ -101,9 +108,10 @@
     class="flex-1 outline-none"
     bind:this={input}
     on:focus={() => (focused = true)}
-    on:blur={onBlur}
+    on:blur={() => (blur = true)}
     on:keyup={onKeyUp}
-    on:input={onInput}
+    on:keydown={onKeyDown}
+    on:input={fetchCompletions}
   />
 
   {#if completeOptions.length > 0}
@@ -112,6 +120,7 @@
       class="absolute left-0 right-0 bottom-0 max-h-40 overflow-y-auto block flex-col bg-white border-2 border-gray-600 z-10 transform translate-y-full overflow-x-hidden rounded"
       size="5"
       bind:this={completions}
+      on:mouseout={() => (selectedOptionIdx = -1)}
     >
       {#each completeOptions as option, idx}
         <li
