@@ -9,6 +9,8 @@
   import AddressField from "./AddressField.svelte";
   import TextEditor from "./TextEditor.svelte";
 
+  export let wrap = 80;
+
   const dispatch = createEventDispatcher();
   let submiting = false;
   let error = null;
@@ -78,6 +80,37 @@
     });
   }
 
+  function fillBlock() {
+    const selection = document.getSelection();
+    if (selection.rangeCount === 0) return;
+
+    const { startContainer, startOffset } = selection.getRangeAt(0);
+    const node = startContainer.parentNode;
+    if (node.dataset.type !== "text") return;
+
+    const text = node.innerText.replaceAll("\n", "");
+    const words = text.split(/\s/);
+    const lines = words.reduce(
+      (acc, word) => {
+        const line = acc[acc.length - 1];
+        if (line.length + word.length > wrap) {
+          acc.push(`${word} `);
+        } else {
+          acc[acc.length - 1] += `${word} `;
+        }
+
+        return acc;
+      },
+      [""]
+    );
+
+    node.innerHTML = lines.join("\n").trim();
+    selection.collapse(
+      node.firstChild,
+      Math.min(node.firstChild.nodeValue.length, startOffset)
+    );
+  }
+
   function onKeyDown(e) {
     if (e.key === "k" && e.altKey) {
       e.preventDefault();
@@ -85,6 +118,8 @@
     } else if (e.key === "c" && e.altKey) {
       e.preventDefault();
       submitMessage();
+    } else if (e.key === "q" && e.altKey) {
+      fillBlock();
     }
   }
 </script>
