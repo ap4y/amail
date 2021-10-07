@@ -10,7 +10,7 @@
   export let wrap = 80;
 
   $: content = parseMessageBody(body);
-  $: console.debug(`selected message ${messageId},`, "body:", body, "parsed content:", content);
+  $: console.debug(`selected message ${window.atob(messageId)},`, "body:", body, "parsed content:", content);
 </script>
 
 {#if content.text.length > 0}

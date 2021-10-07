@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import ApiClient from "../client";
 
-import { quotedText, getAttachments } from "../lib/email";
+import { quotedText, getAttachments, getTextContent } from "../lib/email";
 
 const { subscribe, set, update } = writable(null);
 
@@ -56,7 +56,7 @@ function forward({ id, body, headers }) {
 function edit({ id, body, headers }) {
   const { To, Cc, Subject, ...rest } = headers;
 
-  const content = body.map((item) => quotedText(item)).join("\n");
+  const content = body.map((item) => getTextContent(item)).join("\n");
   const attachments = [];
   body.forEach((item) => {
     getAttachments(item).forEach((attach) =>

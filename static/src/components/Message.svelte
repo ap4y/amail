@@ -47,6 +47,6 @@
 
 <div class="p-5 border-b-2 border-gray-200">
   {#each message.body as body (body.id)}
-    <BodyItem {body} messageId={btoa(message.id)} wrap="100" />
+    <BodyItem {body} messageId={window.btoa(message.id)} wrap="100" />
   {/each}
 </div>

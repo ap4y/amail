@@ -1,4 +1,4 @@
-function getTextContent(body, text = []) {
+export function getTextContent(body, text = []) {
   if (body["content-type"].startsWith("multipart")) {
     body.content.forEach((child) => getTextContent(child, text));
   } else if (body["content-type"] === "text/plain") {
@@ -42,7 +42,7 @@ export function parseMessageBody(
   return content;
 }
 
-function parseTextContent(text) {
+export function parseTextContent(text) {
   const blocks = [];
   let curBlock = null;
 

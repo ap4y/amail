@@ -1,6 +1,9 @@
 <script>
   import { onMount, createEventDispatcher } from "svelte";
+
   import ApiClient from "../client";
+  import { parseTextContent } from "../lib/email";
+
   import { address, name } from "../stores/mailboxes";
   import newMessage from "../stores/new_message";
   import { selectedThread } from "../stores/url";
@@ -48,13 +51,17 @@
     }
   }
 
-  let blocks = [{ type: "text", content: "" }];
+  let blocks = [];
   if ($newMessage?.reply) {
     const { Date, From } = $newMessage?.originalHeaders;
     blocks.push(
+      { type: "text", content: "" },
       { type: "text", content: `On ${Date}, ${From} wrote:` },
       { type: "quote", content: $newMessage?.body }
     );
+  } else {
+    const content = parseTextContent($newMessage?.body || "");
+    blocks.push(...content);
   }
 
   function onInput({ detail }) {
