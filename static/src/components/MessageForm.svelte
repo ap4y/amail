@@ -21,6 +21,19 @@
     toInput.focus();
   });
 
+  async function saveMessage() {
+    error = null;
+    submiting = true;
+    try {
+      await ApiClient.default.saveMessage($newMessage);
+      submiting = false;
+      newMessage.destroy();
+    } catch (e) {
+      error = e.message;
+      submiting = false;
+    }
+  }
+
   async function submitMessage() {
     error = null;
     submiting = true;
@@ -238,13 +251,15 @@
 
       <button
         class="h-10 p-2 mr-3 rounded hover:border-red-500 bg-white text-gray-700 active:bg-red-300 focus:outline-none border"
+        disabled={submiting}
+        on:click={saveMessage}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           class="h-5 fill-current"
           ><path d="M0 0h24v24H0z" fill="none" /><path
-            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+            d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
           /></svg
         >
       </button>
@@ -256,7 +271,7 @@
             : "bg-red-500 hover:bg-red-600 active:bg-red-700"
         } focus:outline-none px-3 text-white h-10 rounded border-0 font-semibold`}
         disabled={submiting}
-        on:click={() => submitMessage()}
+        on:click={submitMessage}
       >
         {submiting ? "Sending" : "Send"}
       </button>

@@ -37,6 +37,11 @@
   async function forward() {
     newMessage.forward(message);
   }
+
+  async function edit() {
+    console.log(message);
+    newMessage.edit(message);
+  }
 </script>
 
 <div class="relative flex flex-wrap sm:flex-row px-3 py-2 border-b border-t">
@@ -146,6 +151,16 @@
   </div>
 
   <div class="flex flex-row py-1 sm:pt-0 sm:ml-auto">
+    <ToolbarButton tooltip="Edit" class="mr-1" on:click={edit}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        class="w-full fill-current"
+        ><path d="M0 0h24v24H0z" fill="none" /><path
+          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+        /></svg
+      >
+    </ToolbarButton>
     <ToolbarButton
       tooltip="Reply"
       class="mr-1"

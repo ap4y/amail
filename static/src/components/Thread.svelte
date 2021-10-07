@@ -6,24 +6,18 @@
   export let thread;
   export let activeMessage;
   export let level = 0;
-
-  function hiddenMessage({ tags }) {
-    return tags.includes("draft");
-  }
 </script>
 
 <div>
   {#if thread}
     {#each thread as [message, subthread]}
-      {#if !hiddenMessage(message)}
-        <div data-message={message.id}>
-          {#if message.id !== $selectedMessage}
-            <CollapsedMessage {message} {level} />
-          {:else}
-            <Message {message} bind:this={activeMessage} />
-          {/if}
-        </div>
-      {/if}
+      <div data-message={message.id}>
+        {#if message.id !== $selectedMessage}
+          <CollapsedMessage {message} {level} />
+        {:else}
+          <Message {message} bind:this={activeMessage} />
+        {/if}
+      </div>
 
       <svelte:self thread={subthread} level={level + 1} bind:activeMessage />
     {/each}

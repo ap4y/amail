@@ -53,6 +53,33 @@ function forward({ id, body, headers }) {
   });
 }
 
+function edit({ id, body, headers }) {
+  const { To, Cc, Subject, ...rest } = headers;
+
+  const content = body.map((item) => quotedText(item)).join("\n");
+  const attachments = [];
+  body.forEach((item) => {
+    getAttachments(item).forEach((attach) =>
+      attachments.push({
+        id: `${id}:${attach.id}`,
+        name: attach.filename,
+        size: attach["content-length"],
+        type: attach["content-type"],
+      })
+    );
+  });
+  set({
+    to: To.split(", "),
+    cc: Cc?.split(", ") || [],
+    subject: Subject,
+    headers: { ...rest },
+    body: content,
+    originalHeaders: headers,
+    reply: false,
+    attachments,
+  });
+}
+
 function setField(updates) {
   update((message) => ({ ...message, ...updates }));
 }
@@ -70,6 +97,7 @@ export default {
   create,
   reply,
   forward,
+  edit,
   setField,
   set: setBody,
   destroy,

@@ -73,6 +73,7 @@ func NewServer(
 		r.Get("/threads/{threadID}", s.threadHandler)
 
 		r.Post("/messages", s.sendMessageHandler)
+		r.Post("/drafts", s.saveMessageHandler)
 		r.Get("/messages/{messageID}/reply", s.messageReplyHandler)
 		r.Get("/messages/{messageID}/parts/{partID}", s.messagePartsHandler)
 		r.Get("/messages/{messageID}/w3m/{partID}", s.messageW3mHandler)
@@ -288,45 +289,10 @@ func (s *Server) tagsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(1024 * 1024); err != nil {
+	msg, err := s.messageFromForm(r)
+	if err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 		return
-	}
-
-	form := r.MultipartForm
-	attachments := make([]*smtp.Attachment, 0)
-	for _, attach := range form.File["attachments[]"] {
-		f, err := attach.Open()
-		if err != nil {
-			sendError(w, r, err, http.StatusBadRequest)
-			return
-		}
-
-		attachments = append(attachments, &smtp.Attachment{
-			ReadCloser:  f,
-			Filename:    attach.Filename,
-			ContentType: attach.Header.Get("Content-Type"),
-		})
-	}
-
-	for _, attach := range form.Value["attachments[]"] {
-		items := strings.Split(attach, ":")
-		if len(items) != 2 {
-			sendError(w, r, errors.New("invalid attachment: id is not valid"), http.StatusBadRequest)
-			return
-		}
-
-		attachment, part, err := s.client.Attachment(items[0], items[1])
-		if err != nil {
-			sendError(w, r, err, http.StatusBadRequest)
-			return
-		}
-
-		attachments = append(attachments, &smtp.Attachment{
-			ReadCloser:  io.NopCloser(attachment),
-			Filename:    part["filename"].(string),
-			ContentType: part["content-type"].(string),
-		})
 	}
 
 	defer func(attached []*smtp.Attachment) {
@@ -335,16 +301,7 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 				logger.Debug().Msgf("Failed to close attachment: %v", err)
 			}
 		}
-	}(attachments)
-
-	msg := &smtp.Message{
-		To:          form.Value["to[]"],
-		CC:          form.Value["cc[]"],
-		Body:        r.FormValue("body"),
-		Subject:     r.FormValue("subject"),
-		Attachments: attachments,
-		Headers:     formMap(form, "headers"),
-	}
+	}(msg.Attachments)
 
 	m, err := s.smtpClient.Send(msg)
 	if err != nil {
@@ -370,6 +327,95 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}
+}
+
+func (s *Server) saveMessageHandler(w http.ResponseWriter, r *http.Request) {
+	msg, err := s.messageFromForm(r)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	defer func(attached []*smtp.Attachment) {
+		for _, attach := range attached {
+			if err := attach.Close(); err != nil {
+				logger.Debug().Msgf("Failed to close attachment: %v", err)
+			}
+		}
+	}(msg.Attachments)
+
+	m, _, _, err := s.smtpClient.Compose(msg)
+	if err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	var mbox *config.Mailbox
+	for _, mailbox := range s.mailboxes {
+		if mailbox.ID == "draft" {
+			mbox = &mailbox
+			break
+		}
+	}
+
+	if mbox != nil && mbox.Folder != "" {
+		if err := s.client.Insert(mbox.Folder, m, "+draft", "-inbox", "-unread"); err != nil {
+			sendError(w, r, err, http.StatusBadRequest)
+			return
+		}
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]string{}); err != nil {
+		sendError(w, r, err, http.StatusBadRequest)
+	}
+}
+
+func (s *Server) messageFromForm(r *http.Request) (*smtp.Message, error) {
+	if err := r.ParseMultipartForm(1024 * 1024); err != nil {
+		return nil, err
+	}
+
+	form := r.MultipartForm
+	attachments := make([]*smtp.Attachment, 0)
+	for _, attach := range form.File["attachments[]"] {
+		f, err := attach.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		attachments = append(attachments, &smtp.Attachment{
+			ReadCloser:  f,
+			Filename:    attach.Filename,
+			ContentType: attach.Header.Get("Content-Type"),
+		})
+	}
+
+	for _, attach := range form.Value["attachments[]"] {
+		items := strings.Split(attach, ":")
+		if len(items) != 2 {
+			return nil, errors.New("invalid attachment: id is not valid")
+		}
+
+		attachment, part, err := s.client.Attachment(items[0], items[1])
+		if err != nil {
+			return nil, err
+		}
+
+		attachments = append(attachments, &smtp.Attachment{
+			ReadCloser:  io.NopCloser(attachment),
+			Filename:    part["filename"].(string),
+			ContentType: part["content-type"].(string),
+		})
+	}
+
+	return &smtp.Message{
+		To:          form.Value["to[]"],
+		CC:          form.Value["cc[]"],
+		Body:        r.FormValue("body"),
+		Subject:     r.FormValue("subject"),
+		Attachments: attachments,
+		Headers:     formMap(form, "headers"),
+	}, nil
 }
 
 func sendError(w http.ResponseWriter, r *http.Request, err error, status int) {

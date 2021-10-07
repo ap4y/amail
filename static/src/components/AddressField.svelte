@@ -39,7 +39,10 @@
 
   function completeOption() {
     if (selectedOptionIdx === -1) {
-      dispatch("change", [...value, input.value]);
+      if (input.value.length > 0) {
+        dispatch("change", [...value, input.value]);
+      }
+
       input.value = null;
       selectedOptionIdx = -1;
       completeOptions = [];
@@ -108,7 +111,7 @@
     class="flex-1 outline-none"
     bind:this={input}
     on:focus={() => (focused = true)}
-    on:blur={() => (blur = true)}
+    on:blur={() => (focused = false)}
     on:keyup={onKeyUp}
     on:keydown={onKeyDown}
     on:input={fetchCompletions}

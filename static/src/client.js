@@ -49,6 +49,39 @@ class ApiClient {
   }
 
   async sendMessage(message) {
+    const res = await fetch(`${this.baseURL}/messages`, {
+      method: "POST",
+      body: this.messageFormData(message),
+    });
+
+    if (res.ok) {
+      return null;
+    }
+
+    throw new ApiError(res.status, res.statusText);
+  }
+
+  async saveMessage(message) {
+    const res = await fetch(`${this.baseURL}/drafts`, {
+      method: "POST",
+      body: this.messageFormData(message),
+    });
+
+    if (res.ok) {
+      return null;
+    }
+
+    throw new ApiError(res.status, res.statusText);
+  }
+
+  replyToMessage(messageId, replyTo) {
+    return this.request(
+      "GET",
+      `/messages/${btoa(messageId)}/reply?reply-to=${replyTo}`
+    );
+  }
+
+  messageFormData(message) {
     const formData = new FormData();
     message.to.forEach((addr) => formData.append("to[]", addr));
     message.cc.forEach((addr) => formData.append("cc[]", addr));
@@ -65,23 +98,7 @@ class ApiClient {
       }
     });
 
-    const res = await fetch(`${this.baseURL}/messages`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (res.ok) {
-      return null;
-    }
-
-    throw new ApiError(res.status, res.statusText);
-  }
-
-  replyToMessage(messageId, replyTo) {
-    return this.request(
-      "GET",
-      `/messages/${btoa(messageId)}/reply?reply-to=${replyTo}`
-    );
+    return formData;
   }
 }
 

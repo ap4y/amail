@@ -61,15 +61,16 @@ func New(address *mail.Address, conf config.Submission, auth Authenticator) *Cli
 	return &Client{address, conf.Username, conf.Hostname, conf.Port, auth}
 }
 
-func (c *Client) Send(msg *Message) (io.Reader, error) {
-	logger.Debug().Msgf("sending %#v", msg)
-
+func (c *Client) Compose(msg *Message) (io.Reader, []*mail.Address, []*mail.Address, error) {
 	var h mail.Header
 	h.SetMessageID(c.generateMessageId())
 	h.Set("User-agent", userAgent)
 	h.SetDate(time.Now())
 	h.SetSubject(msg.Subject)
 	h.SetAddressList("From", []*mail.Address{c.address})
+	for key, value := range msg.Headers {
+		h.Set(key, value)
+	}
 
 	to := make([]*mail.Address, 0)
 	for _, addr := range msg.To {
@@ -80,8 +81,9 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 	}
 	h.SetAddressList("To", to)
 
+	var cc []*mail.Address
 	if len(msg.CC) > 0 {
-		cc := make([]*mail.Address, 0)
+		cc = make([]*mail.Address, 0)
 		for _, addr := range msg.CC {
 			parsed, err := mail.ParseAddress(addr)
 			if err == nil {
@@ -96,31 +98,31 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 		h.Set("Content-Type", "text/plain")
 		w, err := mail.CreateSingleInlineWriter(&buf, h)
 		if err != nil {
-			return nil, fmt.Errorf("mail: %w", err)
+			return nil, to, cc, fmt.Errorf("mail: %w", err)
 		}
 
 		if _, err := io.WriteString(w, msg.Body); err != nil {
-			return nil, fmt.Errorf("mail body: %w", err)
+			return nil, to, cc, fmt.Errorf("mail body: %w", err)
 		}
 		w.Close()
 	} else {
 		mw, err := mail.CreateWriter(&buf, h)
 		if err != nil {
-			return nil, fmt.Errorf("mail: %w", err)
+			return nil, to, cc, fmt.Errorf("mail: %w", err)
 		}
 
 		var th mail.InlineHeader
 		th.Set("Content-Type", "text/plain")
 		tw, err := mw.CreateInline()
 		if err != nil {
-			return nil, fmt.Errorf("mail body: %w", err)
+			return nil, to, cc, fmt.Errorf("mail body: %w", err)
 		}
 		w, err := tw.CreatePart(th)
 		if err != nil {
-			return nil, fmt.Errorf("mail body: %w", err)
+			return nil, to, cc, fmt.Errorf("mail body: %w", err)
 		}
 		if _, err := io.WriteString(w, msg.Body); err != nil {
-			return nil, fmt.Errorf("mail body: %w", err)
+			return nil, to, cc, fmt.Errorf("mail body: %w", err)
 		}
 		w.Close()
 		tw.Close()
@@ -132,15 +134,25 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 
 			w, err = mw.CreateAttachment(ah)
 			if err != nil {
-				return nil, fmt.Errorf("mail attachment: %w", err)
+				return nil, to, cc, fmt.Errorf("mail attachment: %w", err)
 			}
 			if _, err := io.Copy(w, attach); err != nil {
-				return nil, fmt.Errorf("mail attachment: %w", err)
+				return nil, to, cc, fmt.Errorf("mail attachment: %w", err)
 			}
 			w.Close()
 		}
 
 		mw.Close()
+	}
+
+	return &buf, to, cc, nil
+}
+func (c *Client) Send(msg *Message) (io.Reader, error) {
+	logger.Debug().Msgf("sending %#v", msg)
+
+	m, to, cc, err := c.Compose(msg)
+	if err != nil {
+		return nil, err
 	}
 
 	pass, err := c.auth.Password(c.username, c.hostname)
@@ -149,13 +161,22 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 	}
 
 	auth := sasl.NewPlainClient("", c.username, pass)
-	toAddr := make([]string, len(to))
+	toAddr := make([]string, len(to)+len(cc))
 	for idx, addr := range to {
 		toAddr[idx] = addr.Address
 	}
+	for idx, addr := range cc {
+		toAddr[len(to)+idx] = addr.Address
+	}
 
 	var out bytes.Buffer
-	return &out, smtp.SendMail(fmt.Sprintf("%s:%d", c.hostname, c.port), auth, c.address.Address, toAddr, io.TeeReader(&buf, &out))
+	return &out, smtp.SendMail(
+		fmt.Sprintf("%s:%d", c.hostname, c.port),
+		auth,
+		c.address.Address,
+		toAddr,
+		io.TeeReader(m, &out),
+	)
 }
 
 func (c *Client) generateMessageId() string {
