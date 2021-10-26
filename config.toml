@@ -8,6 +8,7 @@ hostname = "mail.ap4y.me"
 port = 587
 username = "ap4y"
 password_command = "pass ap4y.me/mail"
+dkimkey_command = "cat default.private"
 
 [cleanup]
 tags = ["trash", "spam"]

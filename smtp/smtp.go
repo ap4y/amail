@@ -3,7 +3,11 @@ package smtp
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -11,10 +15,13 @@ import (
 
 	"ap4y.me/cloud-mail/config"
 	"github.com/emersion/go-message/mail"
+	"github.com/emersion/go-msgauth/dkim"
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 	"github.com/rs/zerolog"
 )
+
+var ErrInvalidDkimKey = errors.New("invalid DKIM key")
 
 var logger zerolog.Logger
 var userAgent = "amail 0.0.1"
@@ -29,6 +36,7 @@ func SetUserAgent(ua string) {
 
 type Authenticator interface {
 	Password(username, hostname string) (string, error)
+	DkimKey(username, hostname string) (string, error)
 }
 
 type Headers map[string]string
@@ -155,6 +163,12 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 		return nil, err
 	}
 
+	if signed, err := c.dkimSign(m); err != nil {
+		return nil, fmt.Errorf("dkim: %w", err)
+	} else {
+		m = signed
+	}
+
 	pass, err := c.auth.Password(c.username, c.hostname)
 	if err != nil {
 		return nil, fmt.Errorf("auth: %w", err)
@@ -179,11 +193,46 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 	)
 }
 
-func (c *Client) generateMessageId() string {
+func (c *Client) getDomain() string {
 	items := strings.Split(c.address.Address, "@")
+	return items[1]
+}
 
+func (c *Client) generateMessageId() string {
 	id := make([]byte, 5)
 	rand.Read(id)
 
-	return fmt.Sprintf("%s.amail@%s", hex.EncodeToString(id), items[1])
+	return fmt.Sprintf("%s.amail@%s", hex.EncodeToString(id), c.getDomain())
+}
+
+func (c *Client) dkimSign(msg io.Reader) (io.Reader, error) {
+	dkimKey, err := c.auth.DkimKey(c.username, c.hostname)
+	if err != nil {
+		return msg, nil
+	}
+
+	privKey, err := getPrivKey([]byte(dkimKey))
+	if err != nil {
+		return nil, err
+	}
+
+	opts := &dkim.SignOptions{
+		Domain:                 c.getDomain(),
+		Selector:               "default",
+		Signer:                 privKey,
+		HeaderCanonicalization: dkim.CanonicalizationRelaxed,
+		BodyCanonicalization:   dkim.CanonicalizationRelaxed,
+	}
+
+	var buf bytes.Buffer
+	return &buf, dkim.Sign(&buf, msg, opts)
+}
+
+func getPrivKey(pemData []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(pemData)
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, ErrInvalidDkimKey
+	}
+
+	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }

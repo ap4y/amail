@@ -17,7 +17,10 @@ import (
 //go:embed notmuch-config.tmpl
 var notmuchConf embed.FS
 
-var ErrInvalidPasswordCommand = errors.New("invalid PasswordCommand")
+var (
+	ErrInvalidPasswordCommand = errors.New("invalid password_command")
+	ErrInvalidDkimKeyCommand  = errors.New("invalid dkimkey_command")
+)
 
 type Config struct {
 	Name       string
@@ -79,6 +82,7 @@ type Submission struct {
 
 	Username        string
 	PasswordCommand string `toml:"password_command"`
+	DkimKeyCommand  string `toml:"dkimkey_command"`
 }
 
 func (s *Submission) Password(username, hostname string) (string, error) {
@@ -95,6 +99,33 @@ func (s *Submission) Password(username, hostname string) (string, error) {
 		fields := strings.Fields(s.PasswordCommand)
 		if len(fields) == 0 {
 			return "", ErrInvalidPasswordCommand
+		}
+
+		cmd = exec.Command(fields[0], fields[1:]...)
+	}
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(out)), nil
+}
+
+func (s *Submission) DkimKey(username, hostname string) (string, error) {
+	if s.DkimKeyCommand == "" {
+		return "", ErrInvalidDkimKeyCommand
+	}
+
+	var cmd *exec.Cmd
+	shellPath, err := exec.LookPath("sh")
+	if err == nil {
+		args := []string{"-c", s.DkimKeyCommand}
+		cmd = exec.Command(shellPath, args...)
+	} else {
+		fields := strings.Fields(s.DkimKeyCommand)
+		if len(fields) == 0 {
+			return "", ErrInvalidDkimKeyCommand
 		}
 
 		cmd = exec.Command(fields[0], fields[1:]...)
