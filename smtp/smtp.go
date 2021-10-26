@@ -194,8 +194,8 @@ func (c *Client) Send(msg *Message) (io.Reader, error) {
 }
 
 func (c *Client) getDomain() string {
-	items := strings.Split(c.address.Address, "@")
-	return items[1]
+	items := strings.Split(c.hostname, ".")
+	return strings.Join(items[len(items)-2:], ".")
 }
 
 func (c *Client) generateMessageId() string {
