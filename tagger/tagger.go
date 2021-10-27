@@ -2,11 +2,13 @@ package tagger
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
 	"ap4y.me/cloud-mail/notmuch"
+	"github.com/emersion/go-msgauth/dkim"
 	"github.com/rs/zerolog"
 )
 
@@ -49,6 +51,8 @@ func (t *Tagger) RefreshMailboxes() error {
 		}
 	}
 
+	t.processDkimTags()
+
 	for tags, terms := range t.tagRules {
 		if err := t.client.Tag(terms, strings.Fields(tags)); err != nil {
 			logger.Info().Err(err).Msgf("Failed to tag %s with %s", terms, tags)
@@ -62,7 +66,7 @@ func (t *Tagger) Cleanup() error {
 	for _, tag := range t.cleanupTags {
 		logger.Debug().Msgf("Performing cleanup for tag %s", tag)
 
-		files, err := t.client.SearchFiles("tag:" + tag)
+		files, err := t.client.SearchWithOutput("tag:"+tag, "files")
 		if err != nil {
 			logger.Info().Err(err).Msgf("Failed to cleanup tag %s: %s", tag, err)
 			continue
@@ -78,4 +82,53 @@ func (t *Tagger) Cleanup() error {
 	}
 
 	return t.RefreshMailboxes()
+}
+
+func (t *Tagger) processDkimTags() {
+	messages, err := t.client.SearchWithOutput(
+		"tag:unread and tag:inbox not tag:dkim-none not tag:dkim-fail not tag:dkim-ok",
+		"messages",
+	)
+	if err != nil {
+		logger.Info().Err(err).Msg("DKIM tagging failed")
+		return
+	}
+
+	for _, messageId := range messages {
+		if err := t.addDkimTags(messageId); err != nil {
+			logger.Info().Err(err).Msgf("DKIM tagging failed: %s", messageId)
+		}
+	}
+}
+
+func (t *Tagger) addDkimTags(messageId string) error {
+	logger.Debug().Msgf("DKIM tagging %s", messageId)
+
+	r, _, err := t.client.Attachment(messageId, "0")
+	if err != nil {
+		return fmt.Errorf("open raw: %v", err)
+	}
+
+	verifications, err := dkim.Verify(r)
+	if err != nil {
+		return fmt.Errorf("dkim: %v", err)
+	}
+
+	tag := "dkim-ok"
+	if len(verifications) == 0 {
+		tag = "dkim-none"
+	} else {
+		for _, v := range verifications {
+			if v.Err != nil {
+				tag = "dkim-fail"
+				break
+			}
+		}
+	}
+
+	if err := t.client.Tag("id:"+messageId, []string{"+" + tag}); err != nil {
+		return fmt.Errorf("tag: %v", err)
+	}
+
+	return nil
 }
