@@ -10,7 +10,13 @@
   export let wrap = 80;
 
   $: content = parseMessageBody(body);
-  $: console.debug(`selected message ${window.atob(messageId)},`, "body:", body, "parsed content:", content);
+  $: console.debug(
+    `selected message ${window.atob(messageId)},`,
+    "body:",
+    body,
+    "parsed content:",
+    content
+  );
 </script>
 
 {#if content.text.length > 0}
@@ -73,18 +79,25 @@
   </div>
 {/if}
 
-{#if content.html.length > 0}
-  <p class="mt-3">
+<p class="mt-3 flex flex-row">
+  {#if content.html.length > 0}
     {#each content.html as block}
       <a
         href={`/api/messages/${messageId}/parts/${block.id}`}
-        class="block text-red-400 hover:text-red-500 font-semibold underline"
+        class="block mr-3 text-red-400 hover:text-red-500 font-semibold underline"
         target="_blank"
         data-html-body="true">Open HTML</a
       >
     {/each}
-  </p>
-{/if}
+  {/if}
+
+  <a
+    href={`/api/messages/${messageId}/parts/0`}
+    class="block text-red-400 hover:text-red-500 font-semibold underline"
+    target="_blank"
+    data-html-body="true">Show RAW</a
+  >
+</p>
 
 {#if content.attachments.length > 0}
   <div class="flex flex-row flex-wrap mt-3">

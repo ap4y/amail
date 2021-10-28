@@ -197,15 +197,20 @@ func (s *Server) messagePartsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cType := part["content-type"].(string)
-	if part["content-charset"] != nil {
-		cType += "; charset=" + part["content-charset"].(string)
+	if cType, ok := part["content-type"].(string); ok {
+		if part["content-charset"] != nil {
+			cType += "; charset=" + part["content-charset"].(string)
+		}
+		w.Header().Set("Content-Type", cType)
 	}
-	w.Header().Set("Content-Type", cType)
 
 	filename := "attachment"
 	if part["filename"] != nil {
-		filename = part["filename"].(string)
+		if name, ok := part["filename"].(string); ok {
+			filename = name
+		} else if name, ok := part["filename"].([]string); ok {
+			filename = name[0]
+		}
 	}
 
 	http.ServeContent(w, r, filename, time.Now(), attachment)
