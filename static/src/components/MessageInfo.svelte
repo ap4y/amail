@@ -10,12 +10,14 @@
     <span class="inline-flex w-10 text-gray-500">From: </span>
     <FormattedAddress address={message.headers.From} />
   </p>
+  {#if message.headers.To}
   <p class="mb-2 text-gray-500">
     <span class="inline-flex w-10">To: </span>
     {#each message.headers.To.split(", ") as address}
       <FormattedAddress class="mr-3" {address} />
     {/each}
   </p>
+  {/if}
   {#if message.headers.Cc}
     <p class="mb-2 text-gray-500">
       <span class="inline-flex w-10">Cc: </span>
