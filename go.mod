@@ -1,4 +1,4 @@
-module ap4y.me/cloud-mail
+module ap4y.me/amail
 
 go 1.16
 

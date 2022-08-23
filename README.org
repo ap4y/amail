@@ -1,0 +1,127 @@
+* amail
+
+*amail* is an email client and a web frontend for [[https://notmuchmail.org/][notmuch]]. The
+main goal of the project is to provide a turnkey solution for
+self-hosted mail systems.
+
+Features:
+- Text based email composition and text content is preferred over html.
+- Multi-part MIME attachments are supported.
+- HTML only emails converted to text via *w3m*.
+- Flexible mailboxes based on notmuch tagging
+- Powerful search provided by notmuch
+- Simple and clear web based UI
+- Mail submission with DKIM signatures and verification
+- Mailbox based storage
+- Periodic mailbox cleanup
+- Simple configuration process
+
+[[https://raw.githubusercontent.com/ap4y/amail/master/screenshot.png]]
+
+** Getting started
+
+*amail* is a [[https://golang.org/][golang]] application and you are going to need golang
+toolchain to compile the app.
+
+To install or update run:
+
+#+BEGIN_SRC shell
+go get -u github.com/ap4y/amail/cmd/amail
+#+END_SRC
+
+To run execute:
+
+#+BEGIN_SRC shell
+./amail -config config.toml -log debug
+#+END_SRC
+
+Web UI is implemented using [[https://svelte.dev/][svelte]] and is pre-bundled into golang
+app. To setup local development environment for the frontend app you
+will need [[https://nodejs.org][node.js]] with either ~npm~ or ~yarn~.
+
+To pull frontend dependecies run:
+
+#+BEGIN_SRC shell
+cd static
+npm install
+#+END_SRC
+
+To start local development setup:
+
+#+BEGIN_SRC shell
+cd static
+npm run dev
+#+END_SRC
+
+** Configuration
+
+*amail* uses [[https://toml.io][toml]] formal for the config file. [[https://github.com/ap4y/amail/blob/master/config.example.toml][Config example]]:
+
+#+BEGIN_SRC toml
+name = "John Doe"        # Primary name that is used to compose email addresses
+addresses = ["mail@john.me", "john.doe@me.com"] # list of used addresses, first address is a primary outbound address
+maildir = "/home/john/.mail" # path to maildir
+
+#  mail submission settings
+[submission]
+hostname = "mail.john.me"       #
+port = 587
+username = "john"
+password_command = "pass john.me/mail" # shell command to execute to get password
+dkimkey_command = "cat default.private" # shell command to execute to get DKIM private key
+
+[cleanup]
+tags = ["trash"]                # mailboxes to cleaup
+interval = "48h"                # cleanup period
+
+# tagging rules for inbound mail
+# format:
+# "+tag_to_add -tag_to_remove" = "condition"
+[tag_rules]
+"+personal" = "to:mail@ap4y.me or to:ap4y@me.com"
+"+openbsd +list" = "to:tech@openbsd.org"
+"+trash -unread -inbox" = "folder:Trash"
+
+# list of mailboxes
+[[mailboxes]]
+id = "inbox"
+folder = "INBOX"                # Maildir folder
+terms = "tag:personal and tag:inbox" # Tags based query for the mailbox
+toggle_tags = ["inbox"]              # Tag to toggle when added and removed from/to the mailbox
+tracked = true                       # Hightlight in UI when have new mail
+
+[[mailboxes]]
+id = "trash"
+folder = "Trash"
+terms = "tag:trash"
+toggle_tags = ["trash"]
+
+[[mailboxes]]
+id = "openbsd"
+folder = ""
+terms = "tag:openbsd and tag:inbox"
+toggle_tags = ["inbox"]
+#+END_SRC
+
+It's not necessary to create *notmuch* configuration file, it will be
+generated automatically if it doesn't exist.
+
+All queries and tagging rules support provided by *notmuch*, so it's
+recommended to check it's manpage for the full syntax.
+
+** Hotkeys
+
+- *n/p* - next/previous thread
+- *Esc* - close thread
+- *N/P* - scroll up/down in a thread
+- *e/a* - next/previous message in thread
+- *C* - compose new email
+- *r/R* - reply to sender/all
+- *f* - forward
+- *s* - jump to search box
+- *V* - open HTML content in a new tab
+- *A/D/J* - move selected message to Archive/Trash/Junk
+- *Alt+i/a* - jump to Inbox/Archive
+- *Alt+k* - close message editor and discard message
+- *Alt+c* - send message
+- *Alt+q* - wrap paragraph in editor

@@ -1,0 +1,43 @@
+name = "John Doe"        # Primary name that is used to compose email addresses
+addresses = ["mail@john.me", "john.doe@me.com"] # list of used addresses, first address is a primary outbound address
+maildir = "/home/john/.mail" # path to maildir
+
+#  mail submission settings
+[submission]
+hostname = "mail.john.me"       #
+port = 587
+username = "john"
+password_command = "pass john.me/mail" # shell command to execute to get password
+dkimkey_command = "cat default.private" # shell command to execute to get DKIM private key
+
+[cleanup]
+tags = ["trash"]                # mailboxes to cleaup
+interval = "48h"                # cleanup period
+
+# tagging rules for inbound mail
+# format:
+# "+tag_to_add -tag_to_remove" = "condition"
+[tag_rules]
+"+personal" = "to:mail@ap4y.me or to:ap4y@me.com"
+"+openbsd +list" = "to:tech@openbsd.org"
+"+trash -unread -inbox" = "folder:Trash"
+
+# list of mailboxes
+[[mailboxes]]
+id = "inbox"
+folder = "INBOX"                # Maildir folder
+terms = "tag:personal and tag:inbox" # Tags based query for the mailbox
+toggle_tags = ["inbox"]              # Tag to toggle when added and removed from/to the mailbox
+tracked = true                       # Hightlight in UI when have new mail
+
+[[mailboxes]]
+id = "trash"
+folder = "Trash"
+terms = "tag:trash"
+toggle_tags = ["trash"]
+
+[[mailboxes]]
+id = "openbsd"
+folder = ""
+terms = "tag:openbsd and tag:inbox"
+toggle_tags = ["inbox"]

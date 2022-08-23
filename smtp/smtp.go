@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"ap4y.me/cloud-mail/config"
+	"ap4y.me/amail/config"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-msgauth/dkim"
 	"github.com/emersion/go-sasl"

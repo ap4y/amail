@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"ap4y.me/cloud-mail/config"
-	"ap4y.me/cloud-mail/http"
-	"ap4y.me/cloud-mail/smtp"
-	"ap4y.me/cloud-mail/static/public"
-	"ap4y.me/cloud-mail/tagger"
+	"ap4y.me/amail/config"
+	"ap4y.me/amail/http"
+	"ap4y.me/amail/smtp"
+	"ap4y.me/amail/static/public"
+	"ap4y.me/amail/tagger"
 	"github.com/rs/zerolog"
 )
 

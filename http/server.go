@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"ap4y.me/cloud-mail/config"
-	"ap4y.me/cloud-mail/notmuch"
-	"ap4y.me/cloud-mail/smtp"
-	"ap4y.me/cloud-mail/tagger"
+	"ap4y.me/amail/config"
+	"ap4y.me/amail/notmuch"
+	"ap4y.me/amail/smtp"
+	"ap4y.me/amail/tagger"
 	"github.com/go-chi/chi"
 	"github.com/rs/zerolog"
 )

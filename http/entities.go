@@ -1,8 +1,8 @@
 package http
 
 import (
-	"ap4y.me/cloud-mail/config"
-	"ap4y.me/cloud-mail/notmuch"
+	"ap4y.me/amail/config"
+	"ap4y.me/amail/notmuch"
 )
 
 type AccountData struct {

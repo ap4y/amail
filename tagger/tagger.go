@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"ap4y.me/cloud-mail/notmuch"
+	"ap4y.me/amail/notmuch"
 	"github.com/emersion/go-msgauth/dkim"
 	"github.com/rs/zerolog"
 )
