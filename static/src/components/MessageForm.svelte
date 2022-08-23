@@ -210,7 +210,7 @@
     </div>
   </div>
 
-  <div class="p-3 flex-1">
+  <div class="p-3 flex-1 overflow-x-scroll">
     <TextEditor {blocks} on:input={(e) => onInput(e)} />
   </div>
 
