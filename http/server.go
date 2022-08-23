@@ -261,6 +261,7 @@ func (s *Server) messageReplyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reply.ReplyHeaders["From"] = fmt.Sprintf("%s <%s>", s.name, s.addresses[0])
 	if err := json.NewEncoder(w).Encode(reply); err != nil {
 		sendError(w, r, err, http.StatusBadRequest)
 	}
