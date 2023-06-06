@@ -53,6 +53,7 @@ func main() {
 		log.Fatal().Msgf("Failed to refresh mailboxes: %s", err)
 	}
 
+	setupRefresh(time.Duration(60)*time.Second, t)
 	setupCleanup(conf.Cleanup.Interval.Duration, t)
 
 	if len(conf.Addresses) == 0 {
@@ -75,6 +76,17 @@ func main() {
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal().Msgf("Startup error: %s", err)
 	}
+}
+
+func setupRefresh(interval time.Duration, t *tagger.Tagger) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		for range ticker.C {
+			if err := t.RefreshMailboxes(); err != nil {
+				log.Warn().Err(err).Msg("Failed to cleanup mailboxes")
+			}
+		}
+	}()
 }
 
 func setupCleanup(interval time.Duration, t *tagger.Tagger) {
