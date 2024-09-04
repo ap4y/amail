@@ -19,6 +19,7 @@ import (
 	"ap4y.me/amail/smtp"
 	"ap4y.me/amail/tagger"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/rs/zerolog"
 )
 
@@ -44,6 +45,7 @@ type Server struct {
 func NewServer(
 	name string, addresses []string, mailboxes []config.Mailbox, tags []string,
 	smtpClient *smtp.Client, refresher tagger.Refresher, staticBundle fs.FS,
+	creds map[string]string,
 ) (*Server, error) {
 
 	c, err := notmuch.NewClient()
@@ -58,6 +60,10 @@ func NewServer(
 	}
 
 	r := chi.NewRouter()
+	if len(creds) != 0 {
+		r.Use(middleware.BasicAuth("mail", creds))
+	}
+
 	r.Route("/api", func(r chi.Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

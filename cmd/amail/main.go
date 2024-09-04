@@ -66,7 +66,14 @@ func main() {
 		&conf.Submission,
 	)
 
-	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, conf.Tags, client, t, public.Content)
+	creds := map[string]string{}
+	user := os.Getenv("USERNAME")
+	pwd := os.Getenv("PASSWORD")
+	if len(user) > 0 && len(pwd) > 0 {
+		creds[user] = pwd
+	}
+
+	s, err := http.NewServer(conf.Name, conf.Addresses, conf.Mailboxes, conf.Tags, client, t, public.Content, creds)
 	if err != nil {
 		log.Fatal().Msgf("Error creating an http server: %s", err)
 	}
