@@ -57,16 +57,19 @@ type Message struct {
 }
 
 type Client struct {
-	address  *mail.Address
-	username string
-	hostname string
-	port     int
+	address    *mail.Address
+	username   string
+	userdomain string
+	hostname   string
+	port       int
 
 	auth Authenticator
 }
 
 func New(address *mail.Address, conf config.Submission, auth Authenticator) *Client {
-	return &Client{address, conf.Username, conf.Hostname, conf.Port, auth}
+	items := strings.Split(conf.Username, "@")
+
+	return &Client{address, items[0], items[1], conf.Hostname, conf.Port, auth}
 }
 
 func (c *Client) Compose(msg *Message) (io.Reader, []*mail.Address, []*mail.Address, error) {
@@ -217,7 +220,7 @@ func (c *Client) dkimSign(msg io.Reader) (io.Reader, error) {
 	}
 
 	opts := &dkim.SignOptions{
-		Domain:                 c.getDomain(),
+		Domain:                 c.userdomain,
 		Selector:               "default",
 		Signer:                 privKey,
 		HeaderCanonicalization: dkim.CanonicalizationRelaxed,
